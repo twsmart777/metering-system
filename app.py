@@ -74,7 +74,6 @@ def get_last_reading(target_sheet, room_number):
         return filtered_df.iloc[-1] if not filtered_df.empty else None
     except: return None
 
-# 안전하게 숫자로 변환하는 함수
 def safe_float(val):
     try:
         if val is None or val == "" or str(val).isspace():
@@ -163,7 +162,8 @@ if submit:
         try:
             with st.spinner("데이터 처리 중..."):
                 all_rows = sheet.get_all_values()
-                all_rooms_in_sheet = [r[2] for r in all_rows] # 3번째 열이 호수
+                # 시트에 적힌 실제 호수 순서 그대로 리스트화 (헤더 제외)
+                all_rooms_ordered = [r[2] for r in all_rows if len(r) > 2][1:]
                 
                 res_e = safe_float(in_e) if in_e else safe_float(prev_e)
                 res_w = safe_float(in_w) if in_w else safe_float(prev_w)
@@ -174,21 +174,20 @@ if submit:
                 now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 row = [now, selected_building, room, round(res_e, 0), round(res_w, 0), round(res_n, 3), round(res_h, 0), round(res_c, 3)]
 
-                if room in all_rooms_in_sheet:
-                    row_idx = all_rooms_in_sheet.index(room) + 1
+                if room in all_rooms_ordered:
+                    row_idx = all_rooms_ordered.index(room) + 2 # 헤더+인덱스 보정
                     sheet.update(range_name=f'A{row_idx}:H{row_idx}', values=[row])
                     st.toast(f"✅ {room}호 변경수정 완료!")
                 else:
                     sheet.append_row(row)
                     st.toast(f"✅ {room}호 저장 완료!")
 
-                # 다음 호수 찾기
-                unique_rooms = sorted(list(set(all_rooms_in_sheet[1:])), key=lambda x: (x.isdigit(), x))
+                # [중요] 다음 호수 찾기: 정렬하지 않고 시트의 물리적 순서대로 다음 값 추출
                 next_room = ""
-                if room in unique_rooms:
-                    idx = unique_rooms.index(room)
-                    if idx + 1 < len(unique_rooms):
-                        next_room = unique_rooms[idx + 1]
+                if room in all_rooms_ordered:
+                    idx = all_rooms_ordered.index(room)
+                    if idx + 1 < len(all_rooms_ordered):
+                        next_room = all_rooms_ordered[idx + 1]
                 
                 st.session_state['room_input'] = next_room
                 if 'last_room' in st.session_state: del st.session_state['last_room']
@@ -199,4 +198,4 @@ if submit:
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-12 04:37]</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-12 05:06]</div>", unsafe_allow_html=True)
