@@ -10,11 +10,8 @@ scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis
 try:
     # Secrets에서 정보를 가져옵니다.
     info = dict(st.secrets["gcp_service_account"])
-    
-    # [핵심] 암호의 줄바꿈(\n)이 깨져서 들어오는 경우를 대비해 강제로 교정합니다.
-    if "private_key" in info:
-        info["private_key"] = info["private_key"].replace("\\n", "\n")
-    
+
+    # 바로 인증을 진행합니다. (Secrets에서 이미 줄바꿈을 처리했으므로)
     creds = Credentials.from_service_account_info(info, scopes=scope)
     client = gspread.authorize(creds)
     spreadsheet = client.open("검침데이터_관리")
