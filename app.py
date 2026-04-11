@@ -10,7 +10,6 @@ COMPANY_NAME = "프라임시티"
 JSON_FILE = 'service_account.json' 
 BUILDING_LIST = ["더빌", "엘리트타워", "장안프라임광교", "장안프라임광교2", "S타워", "킹덤부띠크"]
 
-# [중요] 403 오류 방지를 위해 드라이브 권한을 scope에 포함합니다.
 scope = [
     "https://www.googleapis.com/auth/spreadsheets", 
     "https://www.googleapis.com/auth/drive"
@@ -75,13 +74,21 @@ def get_last_reading(target_sheet, room_number):
         return filtered_df.iloc[-1] if not filtered_df.empty else None
     except: return None
 
+# 안전하게 숫자로 변환하는 함수
+def safe_float(val):
+    try:
+        if val is None or val == "" or str(val).isspace():
+            return 0.0
+        return float(val)
+    except:
+        return 0.0
+
 st.divider()
 
 # --- 5. 호수 입력 및 데이터 조회 ---
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 room_col, btn_col = st.columns([3, 1])
 
-# 세션 상태에 저장된 호수가 있으면 기본값으로 사용
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
@@ -90,8 +97,6 @@ with room_col:
 with btn_col:
     load_btn = st.button("조회 🔍", use_container_width=True)
 
-last_data = None
-# 호수 입력값이 변경되었거나 조회 버튼 클릭 시 데이터 로드
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
     st.session_state['room_input'] = room
@@ -109,33 +114,29 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </style>
         """, unsafe_allow_html=True)
 
+        h_disp = safe_float(last_data.get('난방', 0.0))
+        c_disp = safe_float(last_data.get('냉방', 0.0))
+
         st.markdown(f"""
             <div class="reading-container">
                 <div class="reading-box"><div class="reading-label">전기</div><div class="reading-value">{last_data.get('전기', '-')}</div></div>
                 <div class="reading-box"><div class="reading-label">수도</div><div class="reading-value">{last_data.get('수도', '-')}</div></div>
                 <div class="reading-box"><div class="reading-label">온수</div><div class="reading-value">{last_data.get('온수', '-')}</div></div>
-                <div class="reading-box"><div class="reading-label">난방</div><div class="reading-value">{last_data.get('난방', 0.0):.3f}</div></div>
-                <div class="reading-box"><div class="reading-label">냉방</div><div class="reading-value">{last_data.get('냉방', 0.0):.3f}</div></div>
+                <div class="reading-box"><div class="reading-label">난방</div><div class="reading-value">{h_disp:.3f}</div></div>
+                <div class="reading-box"><div class="reading-label">냉방</div><div class="reading-value">{c_disp:.3f}</div></div>
             </div>
         """, unsafe_allow_html=True)
 
 # --- 6. 검침 수치 입력 폼 ---
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
+    current_last_data = st.session_state.get('last_data', None)
     
-    last_data = st.session_state.get('last_data', None)
-    
-    def get_prev(key):
-        if last_data is not None and key in last_data:
-            try: return last_data[key]
-            except: return 0
-        return 0
-
-    prev_e = get_prev('전기')
-    prev_w = get_prev('수도')
-    prev_h = get_prev('온수')
-    prev_n = get_prev('난방')
-    prev_c = get_prev('냉방')
+    prev_e = current_last_data.get('전기', 0) if current_last_data is not None else 0
+    prev_w = current_last_data.get('수도', 0) if current_last_data is not None else 0
+    prev_h = current_last_data.get('온수', 0) if current_last_data is not None else 0
+    prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
+    prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
 
     col1, col2 = st.columns(2)
     with col1:
@@ -146,83 +147,56 @@ with st.form("inspection_form", clear_on_submit=True):
         st.markdown(f"♨️ **온수** (전월: {prev_h})")
         in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"기존: {prev_h}")
     with col2:
-        st.markdown(f"🔥 **난방** (전월: {float(prev_n):.3f})")
-        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"기존: {float(prev_n):.3f}")
-        st.markdown(f"❄️ **냉방** (전월: {float(prev_c):.3f})")
-        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"기존: {float(prev_c):.3f}")
+        st.markdown(f"🔥 **난방** (전월: {prev_n:.3f})")
+        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"기존: {prev_n:.3f}")
+        st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f})")
+        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"기존: {prev_c:.3f}")
 
     st.divider()
-    submit = st.form_submit_button(f"🚀 {selected_building} 데이터 전송", use_container_width=True)
+    submit = st.form_submit_button(f"🚀 {selected_building} 데이터 전송 후 다음호실 불러오기", use_container_width=True)
 
-def get_prev_final(key):
-    if last_data is not None:
-        val = last_data.get(key, None)
-        if val in [None, "", " "]: return 0
-        return val
-    return 0
-
-def safe_value(input_val, prev_val):
-    if input_val is None or input_val.strip() == "":
-        return float(prev_val) if prev_val is not None else 0
-    return float(input_val)
-
+# --- 7. 데이터 전송 로직 ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
     else:
         try:
             with st.spinner("데이터 처리 중..."):
-                last_data = get_last_reading(sheet, room)
-
-                p_e = get_prev_final('전기')
-                p_w = get_prev_final('수도')
-                p_h = get_prev_final('온수')
-                p_n = get_prev_final('난방')
-                p_c = get_prev_final('냉방')
-
-                res_e = safe_value(in_e, p_e)
-                res_w = safe_value(in_w, p_w)
-                res_h = safe_value(in_h, p_h)
-                res_n = safe_value(in_n, p_n)
-                res_c = safe_value(in_c, p_c)
+                all_rows = sheet.get_all_values()
+                all_rooms_in_sheet = [r[2] for r in all_rows] # 3번째 열이 호수
+                
+                res_e = safe_float(in_e) if in_e else safe_float(prev_e)
+                res_w = safe_float(in_w) if in_w else safe_float(prev_w)
+                res_h = safe_float(in_h) if in_h else safe_float(prev_h)
+                res_n = safe_float(in_n) if in_n else safe_float(prev_n)
+                res_c = safe_float(in_c) if in_c else safe_float(prev_c)
 
                 now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                row = [now, selected_building, room, round(res_e, 0), round(res_w, 0), round(res_n, 3), round(res_h, 0), round(res_c, 3)]
 
-                row = [
-                    now, selected_building, room,
-                    round(res_e, 0),
-                    round(res_w, 0),
-                    round(res_n, 3),
-                    round(res_h, 0),
-                    round(res_c, 3)
-                ]
-
-                all_rooms = sheet.col_values(3)
-                if room in all_rooms:
-                    row_idx = all_rooms.index(room) + 1
+                if room in all_rooms_in_sheet:
+                    row_idx = all_rooms_in_sheet.index(room) + 1
                     sheet.update(range_name=f'A{row_idx}:H{row_idx}', values=[row])
-                    st.toast(f"✅ {room}호 수정 완료!")
+                    st.toast(f"✅ {room}호 변경수정 완료!")
                 else:
                     sheet.append_row(row)
                     st.toast(f"✅ {room}호 저장 완료!")
 
-                # --- 다음 호수 자동 세팅 로직 ---
-                try:
-                    next_room = str(int(room) + 1)
-                    st.session_state['room_input'] = next_room
-                    # 다음 호수 조회를 위해 세션 초기화
-                    if 'last_room' in st.session_state:
-                        del st.session_state['last_room']
-                    if 'last_data' in st.session_state:
-                        del st.session_state['last_data']
-                    
-                    st.success(f"데이터가 저장되었습니다. 다음 호수({next_room}호)로 이동합니다.")
-                    st.rerun()
-                except ValueError:
-                    # 호수가 숫자가 아닌 경우 (예: "관리실") 다음 호수 계산 건너뜀
-                    st.balloons()
+                # 다음 호수 찾기
+                unique_rooms = sorted(list(set(all_rooms_in_sheet[1:])), key=lambda x: (x.isdigit(), x))
+                next_room = ""
+                if room in unique_rooms:
+                    idx = unique_rooms.index(room)
+                    if idx + 1 < len(unique_rooms):
+                        next_room = unique_rooms[idx + 1]
+                
+                st.session_state['room_input'] = next_room
+                if 'last_room' in st.session_state: del st.session_state['last_room']
+                if 'last_data' in st.session_state: del st.session_state['last_data']
+                
+                st.rerun()
                     
         except Exception as e:
-            st.error(f"❗ 오류: {e}")
+            st.error(f"❗ 오류 발생: {e}")
 
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-12 04:14]</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-12 04:37]</div>", unsafe_allow_html=True)
