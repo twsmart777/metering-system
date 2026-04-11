@@ -94,13 +94,51 @@ if load_btn or (room and st.session_state.get('last_room') != room):
     last_data = get_last_reading(sheet, room)
     if last_data is not None:
         st.success(f"📊 {room}호 전월 데이터를 불러왔습니다.")
-        m_col = st.columns(5)
-        m_col[0].metric("전기", last_data['전기'])
-        m_col[1].metric("수도", last_data['수도'])
-        m_col[2].metric("온수", last_data['온수'])
-        m_col[3].metric("난방", f"{last_data['난방']:.3f}")
-        m_col[4].metric("냉방", f"{last_data['냉방']:.3f}")
+        
+# 가로로 강제 정렬하고 글자 크기를 화면 폭에 맞추는 스타일
+        st.markdown("""
+            <style>
+            .reading-container {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background-color: #262730;
+                padding: 10px;
+                border-radius: 5px;
+                gap: 5px;
+            }
+            .reading-box {
+                flex: 1;
+                text-align: center;
+                min-width: 0; /* 폭 좁아질 때 글자 잘림 방지 */
+            }
+            .reading-label {
+                color: #95a5a6;
+                font-size: clamp(10px, 3vw, 14px); /* 화면 폭에 따라 글자 크기 조절 */
+                margin-bottom: 2px;
+            }
+            .reading-value {
+                color: white;
+                font-weight: bold;
+                font-size: clamp(12px, 4vw, 18px); /* 화면 폭에 따라 글자 크기 조절 */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            </style>
+        """, unsafe_allow_html=True)
 
+        # 실제 수치 표시 부분
+        st.markdown(f"""
+            <div class="reading-container">
+                <div class="reading-box"><div class="reading-label">전기</div><div class="reading-value">{last_data['전기']}</div></div>
+                <div class="reading-box"><div class="reading-label">수도</div><div class="reading-value">{last_data['수도']}</div></div>
+                <div class="reading-box"><div class="reading-label">온수</div><div class="reading-value">{last_data['온수']}</div></div>
+                <div class="reading-box"><div class="reading-label">난방</div><div class="reading-value">{last_data['난방']:.3f}</div></div>
+                <div class="reading-box"><div class="reading-label">냉방</div><div class="reading-value">{last_data['냉방']:.3f}</div></div>
+            </div>
+        """, unsafe_allow_html=True)
+        
 # --- 6. 검침 수치 입력 폼 ---
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
