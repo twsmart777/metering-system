@@ -36,6 +36,25 @@ query_params = st.query_params
 url_building = query_params.get("b", None)
 
 # --- 4. 화면 디자인 ---
+# --- [추가] 비밀번호 설정 ---
+ADMIN_PASSWORD = "7258" # <-- 여기에 사용하실 비밀번호를 적으세요
+
+if 'authenticated' not in st.session_state:
+    st.session_state['authenticated'] = False
+
+def check_password():
+    if st.session_state["password_input"] == ADMIN_PASSWORD:
+        st.session_state["authenticated"] = True
+        del st.session_state["password_input"] # 보안을 위해 입력값 삭제
+    else:
+        st.error("❌ 비밀번호가 틀렸습니다.")
+
+# 인증되지 않은 경우 로그인 화면 표시
+if not st.session_state['authenticated']:
+    st.markdown("### 🔒 시스템 접속 인증")
+    st.text_input("접속 비밀번호를 입력하세요", type="password", key="password_input", on_change=check_password)
+    st.stop() # 인증 전까지 아래 코드는 실행되지 않음
+# --------------------------
 st.set_page_config(page_title=f"{COMPANY_NAME} 통합검침", layout="centered")
 
 st.markdown(f"""
