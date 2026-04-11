@@ -5,22 +5,23 @@ from datetime import datetime
 import pandas as pd
 import os
 
-# --- 1. 설정 (배포할 건물명 리스트) ---
+# --- 1. 설정 ---
 COMPANY_NAME = "프라임시티"
 JSON_FILE = 'service_account.json' 
 BUILDING_LIST = ["더빌", "엘리트타워", "장안프라임광교", "장안프라임광교2", "S타워", "킹덤부띠크"]
-# 구글 시트 접근 권한 범위 (이 줄이 반드시 필요합니다)
-scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-# --- 2. 구글 시트 연결 (로컬/배포 통합 로직) ---
+# [중요] 403 오류 방지를 위해 드라이브 권한을 scope에 포함합니다.
+scope = [
+    "https://www.googleapis.com/auth/spreadsheets", 
+    "https://www.googleapis.com/auth/drive"
+]
+
+# --- 2. 구글 시트 연결 ---
 try:
     if os.path.exists(JSON_FILE):
-        # 로컬: 폴더에 파일이 있을 때
         creds = Credentials.from_service_account_file(JSON_FILE, scopes=scope)
     else:
-        # 배포: 파일이 없을 때 (Secrets 사용)
         info = dict(st.secrets["gcp_service_account"])
-        # 핵심: 텍스트 안의 \n을 실제 줄바꿈으로 변환
         info["private_key"] = info["private_key"].replace("\\n", "\n")
         creds = Credentials.from_service_account_info(info, scopes=scope)
     
@@ -29,9 +30,9 @@ try:
     
 except Exception as e:
     st.error(f"⚠️ 연결 오류 발생: {e}")
-    st.stop() # 연결 실패 시 아래 로직 실행 안 함
+    st.stop()
 
-# --- 3. 주소창 파라미터 읽기 (전용 링크 핵심) ---
+# --- 3. 주소창 파라미터 읽기 ---
 query_params = st.query_params
 url_building = query_params.get("b", None)
 
@@ -45,7 +46,6 @@ st.markdown(f"""
     </div>
     """, unsafe_allow_html=True)
 
-# 건물 결정 및 고정 로직
 if url_building in BUILDING_LIST:
     selected_building = url_building
     st.markdown(f"""
@@ -55,20 +55,17 @@ if url_building in BUILDING_LIST:
         </div>
     """, unsafe_allow_html=True)
 else:
-    # 링크 없이 들어왔을 경우에만 선택창 노출 (관리자용)
     selected_building = st.selectbox("🏗️ 검침 현장을 선택하세요", ["선택하세요"] + BUILDING_LIST)
     if selected_building == "선택하세요":
         st.info("전용 링크로 접속하거나 현장을 선택해 주세요.")
         st.stop()
 
-# 해당 건물의 시트(탭) 연결
 try:
     sheet = spreadsheet.worksheet(selected_building)
 except gspread.exceptions.WorksheetNotFound:
-    sheet = spreadsheet.add_worksheet(title=selected_building, rows="1000", cols="20")
-    sheet.append_row(["일시", "건물명", "호수", "전기", "수도", "난방", "온수", "냉방", "사진상태"])
+    sheet = spreadsheet.add_worksheet(title=selected_building, rows="1000", cols="10")
+    sheet.append_row(["일시", "건물명", "호수", "전기", "수도", "난방", "온수", "냉방"])
 
-# --- 전월 데이터 불러오기 함수 ---
 def get_last_reading(target_sheet, room_number):
     try:
         data = target_sheet.get_all_records()
@@ -83,106 +80,149 @@ st.divider()
 # --- 5. 호수 입력 및 데이터 조회 ---
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 room_col, btn_col = st.columns([3, 1])
+
+# 세션 상태에 저장된 호수가 있으면 기본값으로 사용
+if 'room_input' not in st.session_state:
+    st.session_state['room_input'] = ""
+
 with room_col:
-    room = st.text_input("호수", placeholder="호수 입력", label_visibility="collapsed")
+    room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
 with btn_col:
     load_btn = st.button("조회 🔍", use_container_width=True)
 
 last_data = None
+# 호수 입력값이 변경되었거나 조회 버튼 클릭 시 데이터 로드
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
+    st.session_state['room_input'] = room
     last_data = get_last_reading(sheet, room)
+    st.session_state['last_data'] = last_data
+    
     if last_data is not None:
         st.success(f"📊 {room}호 전월 데이터를 불러왔습니다.")
-        
-# 가로로 강제 정렬하고 글자 크기를 화면 폭에 맞추는 스타일
         st.markdown("""
             <style>
-            .reading-container {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                background-color: #262730;
-                padding: 10px;
-                border-radius: 5px;
-                gap: 5px;
-            }
-            .reading-box {
-                flex: 1;
-                text-align: center;
-                min-width: 0; /* 폭 좁아질 때 글자 잘림 방지 */
-            }
-            .reading-label {
-                color: #95a5a6;
-                font-size: clamp(10px, 3vw, 14px); /* 화면 폭에 따라 글자 크기 조절 */
-                margin-bottom: 2px;
-            }
-            .reading-value {
-                color: white;
-                font-weight: bold;
-                font-size: clamp(12px, 4vw, 18px); /* 화면 폭에 따라 글자 크기 조절 */
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
+            .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
+            .reading-box { flex: 1; text-align: center; min-width: 0; }
+            .reading-label { color: #95a5a6; font-size: clamp(10px, 3vw, 14px); margin-bottom: 2px; }
+            .reading-value { color: white; font-weight: bold; font-size: clamp(12px, 4vw, 18px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             </style>
         """, unsafe_allow_html=True)
 
-        # 실제 수치 표시 부분
         st.markdown(f"""
             <div class="reading-container">
-                <div class="reading-box"><div class="reading-label">전기</div><div class="reading-value">{last_data['전기']}</div></div>
-                <div class="reading-box"><div class="reading-label">수도</div><div class="reading-value">{last_data['수도']}</div></div>
-                <div class="reading-box"><div class="reading-label">온수</div><div class="reading-value">{last_data['온수']}</div></div>
-                <div class="reading-box"><div class="reading-label">난방</div><div class="reading-value">{last_data['난방']:.3f}</div></div>
-                <div class="reading-box"><div class="reading-label">냉방</div><div class="reading-value">{last_data['냉방']:.3f}</div></div>
+                <div class="reading-box"><div class="reading-label">전기</div><div class="reading-value">{last_data.get('전기', '-')}</div></div>
+                <div class="reading-box"><div class="reading-label">수도</div><div class="reading-value">{last_data.get('수도', '-')}</div></div>
+                <div class="reading-box"><div class="reading-label">온수</div><div class="reading-value">{last_data.get('온수', '-')}</div></div>
+                <div class="reading-box"><div class="reading-label">난방</div><div class="reading-value">{last_data.get('난방', 0.0):.3f}</div></div>
+                <div class="reading-box"><div class="reading-label">냉방</div><div class="reading-value">{last_data.get('냉방', 0.0):.3f}</div></div>
             </div>
         """, unsafe_allow_html=True)
-        
+
 # --- 6. 검침 수치 입력 폼 ---
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
-    col1, col2 = st.columns(2)
     
+    last_data = st.session_state.get('last_data', None)
+    
+    def get_prev(key):
+        if last_data is not None and key in last_data:
+            try: return last_data[key]
+            except: return 0
+        return 0
+
+    prev_e = get_prev('전기')
+    prev_w = get_prev('수도')
+    prev_h = get_prev('온수')
+    prev_n = get_prev('난방')
+    prev_c = get_prev('냉방')
+
+    col1, col2 = st.columns(2)
     with col1:
-        st.markdown(f"⚡ **전기** (전월: {last_data['전기'] if last_data is not None else '-'})")
-        elec = st.text_input("전기", key="elec_val", label_visibility="collapsed", placeholder="공란 시 0")
-        st.markdown(f"💧 **수도** (전월: {last_data['수도'] if last_data is not None else '-'})")
-        water = st.text_input("수도", key="water_val", label_visibility="collapsed", placeholder="공란 시 0")
-        st.markdown(f"♨️ **온수** (전월: {last_data['온수'] if last_data is not None else '-'})")
-        hotwater = st.text_input("온수", key="hotwater_val", label_visibility="collapsed", placeholder="공란 시 0")
-        
+        st.markdown(f"⚡ **전기** (전월: {prev_e})")
+        in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"기존: {prev_e}")
+        st.markdown(f"💧 **수도** (전월: {prev_w})")
+        in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"기존: {prev_w}")
+        st.markdown(f"♨️ **온수** (전월: {prev_h})")
+        in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"기존: {prev_h}")
     with col2:
-        st.markdown(f"🔥 **난방** (전월: {f'{last_data['난방']:.3f}' if last_data is not None else '-'})")
-        heat = st.text_input("난방", key="heat_val", label_visibility="collapsed", placeholder="0.000")
-        st.markdown(f"❄️ **냉방** (전월: {f'{last_data['냉방']:.3f}' if last_data is not None else '-'})")
-        cool = st.text_input("냉방", key="cool_val", label_visibility="collapsed", placeholder="0.000")
-        
+        st.markdown(f"🔥 **난방** (전월: {float(prev_n):.3f})")
+        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"기존: {float(prev_n):.3f}")
+        st.markdown(f"❄️ **냉방** (전월: {float(prev_c):.3f})")
+        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"기존: {float(prev_c):.3f}")
+
     st.divider()
-    photo = st.camera_input("📸 사진 촬영 (선택)")
     submit = st.form_submit_button(f"🚀 {selected_building} 데이터 전송", use_container_width=True)
 
-    if submit:
-        if not room:
-            st.error("❗ 호수를 먼저 입력하고 조회를 눌러주세요.")
-        else:
-            try:
-                def to_float(v): return float(v.strip()) if v.strip() else 0.0
-                with st.spinner("전송 중..."):
-                    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    photo_status = "확인됨" if photo is not None else "미첨부"
-                    row = [now, selected_building, room, round(to_float(elec), 0), round(to_float(water), 0), 
-                           round(to_float(heat), 3), round(to_float(hotwater), 0), round(to_float(cool), 3), photo_status]
+def get_prev_final(key):
+    if last_data is not None:
+        val = last_data.get(key, None)
+        if val in [None, "", " "]: return 0
+        return val
+    return 0
 
-# --- 7. 중복 방지 로직 ---
-                    all_rooms = sheet.col_values(3) # 3번째 '호수' 열 확인
-                    if room in all_rooms:
-                        row_idx = all_rooms.index(room) + 1
-                        sheet.update(range_name=f'A{row_idx}:I{row_idx}', values=[row])
-                        st.success(f"✅ {room}호 데이터를 최신으로 수정했습니다!")
-                    else:
-                        sheet.append_row(row)
-                        st.success(f"✅ {room}호 새 데이터를 저장했습니다!")
+def safe_value(input_val, prev_val):
+    if input_val is None or input_val.strip() == "":
+        return float(prev_val) if prev_val is not None else 0
+    return float(input_val)
+
+if submit:
+    if not room:
+        st.error("❗ 호수를 입력해 주세요.")
+    else:
+        try:
+            with st.spinner("데이터 처리 중..."):
+                last_data = get_last_reading(sheet, room)
+
+                p_e = get_prev_final('전기')
+                p_w = get_prev_final('수도')
+                p_h = get_prev_final('온수')
+                p_n = get_prev_final('난방')
+                p_c = get_prev_final('냉방')
+
+                res_e = safe_value(in_e, p_e)
+                res_w = safe_value(in_w, p_w)
+                res_h = safe_value(in_h, p_h)
+                res_n = safe_value(in_n, p_n)
+                res_c = safe_value(in_c, p_c)
+
+                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                row = [
+                    now, selected_building, room,
+                    round(res_e, 0),
+                    round(res_w, 0),
+                    round(res_n, 3),
+                    round(res_h, 0),
+                    round(res_c, 3)
+                ]
+
+                all_rooms = sheet.col_values(3)
+                if room in all_rooms:
+                    row_idx = all_rooms.index(room) + 1
+                    sheet.update(range_name=f'A{row_idx}:H{row_idx}', values=[row])
+                    st.toast(f"✅ {room}호 수정 완료!")
+                else:
+                    sheet.append_row(row)
+                    st.toast(f"✅ {room}호 저장 완료!")
+
+                # --- 다음 호수 자동 세팅 로직 ---
+                try:
+                    next_room = str(int(room) + 1)
+                    st.session_state['room_input'] = next_room
+                    # 다음 호수 조회를 위해 세션 초기화
+                    if 'last_room' in st.session_state:
+                        del st.session_state['last_room']
+                    if 'last_data' in st.session_state:
+                        del st.session_state['last_data']
+                    
+                    st.success(f"데이터가 저장되었습니다. 다음 호수({next_room}호)로 이동합니다.")
+                    st.rerun()
+                except ValueError:
+                    # 호수가 숫자가 아닌 경우 (예: "관리실") 다음 호수 계산 건너뜀
                     st.balloons()
-            except ValueError:
-                st.error("❗ 숫자와 소수점만 입력해 주세요.")
+                    
+        except Exception as e:
+            st.error(f"❗ 오류: {e}")
+
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-12 04:14]</div>", unsafe_allow_html=True)
