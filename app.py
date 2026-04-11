@@ -164,17 +164,25 @@ with st.form("inspection_form", clear_on_submit=True):
 
     if submit:
         if not room:
-            st.error("❗ 호수를 입력해 주세요.")
+            st.error("❗ 호수를 먼저 입력하고 조회를 눌러주세요.")
         else:
             try:
                 def to_float(v): return float(v.strip()) if v.strip() else 0.0
                 with st.spinner("전송 중..."):
                     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     photo_status = "확인됨" if photo is not None else "미첨부"
-                    row = [now, selected_building, room, round(to_float(elec), 2), round(to_float(water), 2), 
-                           round(to_float(heat), 3), round(to_float(hotwater), 2), round(to_float(cool), 3), photo_status]
-                    sheet.append_row(row)
-                    st.success(f"✅ {selected_building} {room}호 전송 완료!")
+                    row = [now, selected_building, room, round(to_float(elec), 0), round(to_float(water), 0), 
+                           round(to_float(heat), 3), round(to_float(hotwater), 0), round(to_float(cool), 3), photo_status]
+
+# --- 7. 중복 방지 로직 ---
+                    all_rooms = sheet.col_values(3) # 3번째 '호수' 열 확인
+                    if room in all_rooms:
+                        row_idx = all_rooms.index(room) + 1
+                        sheet.update(range_name=f'A{row_idx}:I{row_idx}', values=[row])
+                        st.success(f"✅ {room}호 데이터를 최신으로 수정했습니다!")
+                    else:
+                        sheet.append_row(row)
+                        st.success(f"✅ {room}호 새 데이터를 저장했습니다!")
                     st.balloons()
             except ValueError:
                 st.error("❗ 숫자와 소수점만 입력해 주세요.")
