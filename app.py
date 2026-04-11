@@ -11,8 +11,8 @@ JSON_FILE = 'service_account.json'
 BUILDING_LIST = ["더빌", "엘리트타워", "장안프라임광교", "장안프라임광교2", "S타워", "킹덤부띠크"]
 
 # [비밀번호 설정]
-SITE_PASSWORD = "1234"      # 현장 전용 링크용 (공통)
-ADMIN_PASSWORD = "admin"    # 메인 주소 접속용 (관리자)
+SITE_PASSWORD = "5922"      # 현장 전용 링크용 (공통)
+ADMIN_PASSWORD = "7258"    # 메인 주소 접속용 (관리자)
 
 scope = [
     "https://www.googleapis.com/auth/spreadsheets", 
