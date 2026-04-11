@@ -4,45 +4,41 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pandas as pd
 
-# --- 1. 설정 ---
-COMPANY_NAME = "프라임시티"
-BUILDING_LIST = ["더빌", "엘리트타워", "장안프라임광교", "장안프라임광교2", "S타워", "킹덤부띠크"]
-
-# --- 2. 구글 시트 연결 (수정된 부분) ---
+# --- 구글 연결 설정 (에러 자동 수정 기능 추가) ---
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
 try:
-    # 스트림릿 설정창(Secrets)에 입력한 정보를 읽어옵니다.
-    creds_info = st.secrets["gcp_service_account"]
-    creds = Credentials.from_service_account_info(creds_info, scopes=scope)
+    # Secrets에서 정보를 가져옵니다.
+    info = dict(st.secrets["gcp_service_account"])
+    
+    # [핵심] 암호의 줄바꿈(\n)이 깨져서 들어오는 경우를 대비해 강제로 교정합니다.
+    if "private_key" in info:
+        info["private_key"] = info["private_key"].replace("\\n", "\n")
+    
+    creds = Credentials.from_service_account_info(info, scopes=scope)
     client = gspread.authorize(creds)
     spreadsheet = client.open("검침데이터_관리")
 except Exception as e:
     st.error(f"⚠️ 연결 오류 발생: {e}")
-    st.info("스트림릿 Settings -> Secrets 창에 구글 인증 정보를 넣으셨는지 확인해주세요.")
+    st.info("스트림릿 Settings -> Secrets 창 설정을 확인해주세요.")
     st.stop()
 
-# --- 3. 주소창 파라미터 읽기 ---
+# --- 화면 및 로직 (관리자님 코드와 동일) ---
+COMPANY_NAME = "프라임시티"
+BUILDING_LIST = ["더빌", "엘리트타워", "장안프라임광교", "장안프라임광교2", "S타워", "킹덤부띠크"]
+
+st.set_page_config(page_title=f"{COMPANY_NAME} 통합검침", layout="centered")
+st.markdown(f"<div style='text-align: center; background-color: #1c2833; padding: 15px; border-radius: 10px; margin-bottom: 20px;'> <h2 style='color: #ecf0f1; margin: 0;'>{COMPANY_NAME}</h2> <p style='color: #95a5a6; margin: 5px 0 0 0; font-size: 0.9em;'>현장별 전용 검침 시스템</p> </div>", unsafe_allow_html=True)
+
 query_params = st.query_params
 url_building = query_params.get("b", None)
-
-# --- 4. 화면 디자인 ---
-st.set_page_config(page_title=f"{COMPANY_NAME} 통합검침", layout="centered")
-
-st.markdown(f"""
-    <div style='text-align: center; background-color: #1c2833; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
-        <h2 style='color: #ecf0f1; margin: 0;'>{COMPANY_NAME}</h2>
-        <p style='color: #95a5a6; margin: 5px 0 0 0; font-size: 0.9em;'>현장별 전용 검침 시스템</p>
-    </div>
-    """, unsafe_allow_html=True)
 
 if url_building in BUILDING_LIST:
     selected_building = url_building
     st.markdown(f"<div style='background-color: #d4edda; padding: 15px; border-radius: 8px; border: 2px solid #28a745; text-align: center;'><h3 style='color: #155724; margin: 0;'>🏢 {selected_building}</h3></div>", unsafe_allow_html=True)
 else:
     selected_building = st.selectbox("🏗️ 검침 현장을 선택하세요", ["선택하세요"] + BUILDING_LIST)
-    if selected_building == "선택하세요":
-        st.stop()
+    if selected_building == "선택하세요": st.stop()
 
 try:
     sheet = spreadsheet.worksheet(selected_building)
@@ -50,7 +46,6 @@ except gspread.exceptions.WorksheetNotFound:
     sheet = spreadsheet.add_worksheet(title=selected_building, rows="1000", cols="20")
     sheet.append_row(["일시", "건물명", "호수", "전기", "수도", "난방", "온수", "냉방", "사진상태"])
 
-# 이후 검침 로직 (기존과 동일)
 def get_last_reading(target_sheet, room_number):
     try:
         data = target_sheet.get_all_records()
@@ -62,7 +57,6 @@ def get_last_reading(target_sheet, room_number):
 
 st.divider()
 room = st.text_input("🔢 호수 입력", placeholder="예: 101")
-last_data = None
 if room:
     last_data = get_last_reading(sheet, room)
     if last_data is not None:
