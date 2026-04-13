@@ -93,6 +93,7 @@ if url_building in BUILDING_LIST:
     st.markdown(f"""
         <div style='background-color: #d4edda; padding: 15px; border-radius: 8px; border: 2px solid #28a745; text-align: center; margin-bottom: 20px;'>
             <h3 style='color: #155724; margin: 0;'>🏢 {selected_building}</h3>
+            <p style='margin: 5px 0 0 0; font-weight: bold; color: #155724;'>본인 담당 현장이 맞는지 확인하세요</p>
         </div>
     """, unsafe_allow_html=True)
 else:
