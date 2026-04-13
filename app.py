@@ -140,7 +140,7 @@ st.markdown("""
     /* 2. 입력창 내부 디자인(패딩, 테두리 등) 박스 강제 지정 */
     [data-testid="stTextInput"] > div > div {
         height: 70px !important;
-        background-color: #31333F !important; /* 배경색 유지 */
+        background-color: #f0f2f6 !important; /* 배경색 유지 */
     }
 
     /* 3. 실제 글자가 써지는 영역 강제 지정 */
