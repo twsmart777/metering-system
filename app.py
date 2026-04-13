@@ -25,41 +25,56 @@ st.set_page_config(page_title=f"{COMPANY_NAME} 통합검침", layout="centered")
 # [어르신 맞춤형 왕버튼 및 왕글씨 스타일 추가 - 정렬 수정 버전]
 st.markdown("""
     <style>
-    /* 전체 글자 크기 및 최상단 툴바 가림 방지 */
+    /* 전체 레이아웃 상단 여백 확보 (툴바 가림 방지) */
+    .main .block-container {
+        padding-top: 5rem !important;
+        max-width: 600px;
+    }
+    
+    /* 전체 글자 크기 기본값 */
     html, body, [class*="css"] {
         font-size: 24px !important;
-        padding-top: 30px !important;
     }
-    /* 입력창 높이 및 글자 정렬 */
+
+    /* 입력창(Input) 높이 및 수직 중앙 정렬 */
     input {
         height: 80px !important;
         font-size: 35px !important;
         font-weight: bold !important;
-        padding: 10px !important;
+        padding: 0 15px !important; /* 상하 패딩 제거, 좌우만 유지 */
+        line-height: 80px !important; /* 높이와 동일하게 설정하여 수직 중앙 정렬 */
         box-sizing: border-box !important;
     }
-    /* 버튼 스타일 및 내부 글자 중앙 정렬 */
+
+    /* 버튼(Button) 높이 및 수직/수평 중앙 정렬 */
     button {
         height: 100px !important;
-        font-size: 40px !important; 
+        font-size: 35px !important; 
         font-weight: bold !important;
         background-color: #2e86de !important;
         color: white !important;
         border-radius: 20px !important;
+        
+        /* Flexbox를 이용한 강제 중앙 정렬 */
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        line-height: 1 !important;
+        line-height: 100px !important; /* 높이와 동일하게 설정 */
+        padding: 0 !important;
     }
+
     /* 라벨(항목명) 크기 */
     .stMarkdown p, .stMarkdown h3 {
         font-size: 32px !important;
         font-weight: bold !important;
     }
-    /* 선택 박스 크기 */
+
+    /* 선택 박스(Selectbox) 크기 및 정렬 */
     div[data-baseweb="select"] {
         height: 80px !important;
         font-size: 28px !important;
+        display: flex !important;
+        align-items: center !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -282,4 +297,4 @@ if submit:
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 19:07]</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 19:11]</div>", unsafe_allow_html=True)
