@@ -4,8 +4,6 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, timedelta, timezone
 import pandas as pd
 import os
-def do_nothing():
-    pass
 
 # --- 1. 설정 및 비밀번호 관리 ---
 COMPANY_NAME = "프라임시티"
@@ -199,17 +197,26 @@ st.markdown("""
     }
     </style>
     <script>
-    // 이 코드는 브라우저가 엔터 키를 인지하는 즉시 죽여버립니다.
-    window.parent.document.addEventListener('keydown', function(e) {
+    // 브라우저 최상단에서 엔터 키를 가로채서 버립니다.
+    const doc = window.parent.document;
+    
+    doc.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.keyCode === 13) {
-            // 현재 포커스가 입력창(INPUT)에 있다면 무조건 막음
+            // 입력창에서 엔터가 눌리면
             if (e.target.tagName === 'INPUT') {
-                e.preventDefault();
-                e.stopImmediatePropagation();
+                e.preventDefault(); // 전송 방지
+                e.stopImmediatePropagation(); // 폼에 신호 전달 차단
+                
+                // [편의기능] 다음 칸으로 커서만 옮겨주기
+                const inputs = Array.from(doc.querySelectorAll('input[type="text"]:not([type="password"])'));
+                const index = inputs.indexOf(e.target);
+                if (index > -1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
                 return false;
             }
         }
-    }, true); // 'true'는 이벤트가 발생하자마자(캡처링 단계) 가로챈다는 뜻입니다.
+    }, true); // 'true' 옵션이 매우 중요합니다 (캡처링 단계 차단)
     </script>
     """, unsafe_allow_html=True)
 
@@ -267,19 +274,19 @@ with st.form("inspection_form", clear_on_submit=True):
 
 # 컬럼 레이아웃을 제거하고 순차적으로 배치
     st.markdown(f"⚡ **전기** (전월: {prev_e} kw)")
-    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"", on_change=do_nothing)
+    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"")
     
     st.markdown(f"💧 **수도** (전월: {prev_w} $m^3$)")
-    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"", on_change=do_nothing)
+    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"")
     
     st.markdown(f"🔥 **온수** (전월: {prev_h} $m^3$)")
-    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"", on_change=do_nothing)
+    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"")
     
     st.markdown(f"♨️ **난방** (전월: {prev_n:.3f} m/wh)")
-    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"", on_change=do_nothing)
+    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"")
     
     st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f} m/wh)")
-    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"", on_change=do_nothing)
+    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"")
 
     st.divider()
     submit = st.form_submit_button(f"🚀 전송. 호수이동", use_container_width=True)
