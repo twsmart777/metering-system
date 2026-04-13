@@ -93,7 +93,7 @@ if url_building in BUILDING_LIST:
     st.markdown(f"""
         <div style='background-color: #d4edda; padding: 15px; border-radius: 8px; border: 2px solid #28a745; text-align: center; margin-bottom: 20px;'>
             <h3 style='color: #155724; margin: 0;'>🏢 {selected_building}</h3>
-            <p style='margin: 5px 0 0 0; font-weight: bold; color: #155724;'>본인 담당 현장이 맞는지 확인하세요</p>
+            <p style='margin: 5px 0 0 0; font-weight: bold; color: #155724; font-size: 0.9em;'>담당 현장이 맞는지 확인하세요</p>
         </div>
     """, unsafe_allow_html=True)
 else:
@@ -219,6 +219,8 @@ if load_btn or (room and st.session_state.get('last_room') != room):
         st.success(f"📊 {room}호 전월 데이터를 불러왔습니다.")
         st.markdown("""
             <style>
+            /* 성공 알림 박스의 글자 크기만 조절 */
+            [data-testid="stNotificationContent"] { font-size: 0.8rem !important; }
             .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
             .reading-box { flex: 1; text-align: center; min-width: 0; }
             .reading-label { color: #95a5a6; font-size: clamp(10px, 3vw, 14px); margin-bottom: 2px; }
