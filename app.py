@@ -150,7 +150,7 @@ st.markdown("""
     /* 4. 실제 input 태그 내부 설정 (다크모드에서도 검정글자 유지) */
     [data-testid="stTextInput"] input {
         height: 75px !important;
-        font-size: 25px !important;
+        font-size: 22px !important;
         font-weight: bold !important;
         color: #000000 !important; /* 글자색 검정 */
         -webkit-text-fill-color: #000000 !important; /* iOS/사파리 강제 검정색 */
@@ -168,7 +168,7 @@ st.markdown("""
     [data-testid="stMarkdownContainer"] p {
         font-size: 24px !important; /* 이 숫자를 조절해서 라벨 크기를 변경하세요 */
         font-weight: bold !important;
-        margin-bottom: -5px !important; /* 입력창과의 간격을 좁힘 */
+        margin-bottom: -2px !important; /* 입력창과의 간격을 좁힘 */
     }
     </style>
     """, unsafe_allow_html=True)
