@@ -180,16 +180,21 @@ with st.form("inspection_form", clear_on_submit=True):
     prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
     prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
 
-        st.markdown(f"⚡ **전기** (전월: {prev_e})")
-        in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_e}")
-        st.markdown(f"💧 **수도** (전월: {prev_w})")
-        in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_w}")
-        st.markdown(f"♨️ **온수** (전월: {prev_h})")
-        in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_h}")
-        st.markdown(f"🔥 **난방** (전월: {prev_n:.3f})")
-        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_n:.3f}")
-        st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f})")
-        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_c:.3f}")
+# 컬럼 레이아웃을 제거하고 순차적으로 배치
+    st.markdown(f"⚡ **전기** (전월: {prev_e})")
+    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_e}")
+    
+    st.markdown(f"💧 **수도** (전월: {prev_w})")
+    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_w}")
+    
+    st.markdown(f"♨️ **온수** (전월: {prev_h})")
+    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_h}")
+    
+    st.markdown(f"🔥 **난방** (전월: {prev_n:.3f})")
+    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_n:.3f}")
+    
+    st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f})")
+    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_c:.3f}")
 
     st.divider()
     submit = st.form_submit_button(f"🚀 {selected_building} 전송 후 다음호실 이동", use_container_width=True)
