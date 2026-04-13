@@ -150,7 +150,7 @@ st.markdown("""
     /* 4. 실제 input 태그 내부 설정 (다크모드에서도 검정글자 유지) */
     [data-testid="stTextInput"] input {
         height: 75px !important;
-        font-size: 30px !important;
+        font-size: 25px !important;
         font-weight: bold !important;
         color: #000000 !important; /* 글자색 검정 */
         -webkit-text-fill-color: #000000 !important; /* iOS/사파리 강제 검정색 */
@@ -162,6 +162,13 @@ st.markdown("""
     [data-testid="stTextInput"] input::placeholder {
         color: #888888 !important;
         -webkit-text-fill-color: #888888 !important;
+    }
+
+    /* 6. "⚡ 전기", "💧 수도" 같은 마크다운 텍스트 크기 */
+    [data-testid="stMarkdownContainer"] p {
+        font-size: 24px !important; /* 이 숫자를 조절해서 라벨 크기를 변경하세요 */
+        font-weight: bold !important;
+        margin-bottom: -5px !important; /* 입력창과의 간격을 좁힘 */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -225,10 +232,10 @@ with st.form("inspection_form", clear_on_submit=True):
     st.markdown(f"💧 **수도** (전월: {prev_w})")
     in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_w}")
     
-    st.markdown(f"♨️ **온수** (전월: {prev_h})")
+    st.markdown(f"🔥 **온수** (전월: {prev_h})")
     in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_h}")
     
-    st.markdown(f"🔥 **난방** (전월: {prev_n:.3f})")
+    st.markdown(f"♨️ **난방** (전월: {prev_n:.3f})")
     in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_n:.3f}")
     
     st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f})")
