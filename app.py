@@ -172,19 +172,18 @@ st.markdown("""
     }
     /* 전송 버튼(submit button)의 높이와 글자 크기 조절 */
     div[data-testid="stFormSubmitButton"] button {
-        height: 85px !important;       /* 버튼 높이 */
-        font-size: 24px !important;    /* 버튼 글자 크기 */
-        font-weight: bold !important;  /* 글자 굵게 */
-        background-color: #28a745 !important; /* 버튼 배경색 (초록계열) */
-        color: white !important;       /* 버튼 글자색 */
-        border-radius: 10px !important; /* 모서리 둥글게 */
-    }
-    /* [색상 설정] 시스템 다크모드 영향을 받지 않는 선명한 색 */
+        height: 90px !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        
+        /* [색상 설정] 시스템 다크모드 영향을 받지 않는 선명한 색 */
         background-color: #FFD700 !important; /* 밝은 골드/노란색 */
         color: #000000 !important;           /* 글자는 진한 검정 */
+        border: 3px solid #000000 !important; /* 테두리도 검정으로 명확하게 */
         border-radius: 12px !important;
         color-scheme: light !important;
     }
+    
     /* 버튼을 눌렀을 때(Hover/Active) 살짝 어두워지는 효과 */
     div[data-testid="stFormSubmitButton"] button:hover {
         background-color: #FFC400 !important;
