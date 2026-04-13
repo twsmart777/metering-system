@@ -162,30 +162,9 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 7. 검침 수치 입력 폼 (UI 유지 + 엔터키 강제 제어 스크립트) ---
+# --- 7. 검침 수치 입력 폼 및 데이터 전송 통합 ---
 
-# [수정] 엔터키를 눌렀을 때 '저장'이 되지 않고 '다음 칸'으로 커서를 옮겨주는 스크립트
-st.components.v1.html("""
-<script>
-    const inputs = window.parent.document.querySelectorAll('input');
-    inputs.forEach((input, index) => {
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // 폼 전송 막기
-                const next = inputs[index + 1];
-                if (next) {
-                    next.focus(); // 다음 입력창으로 포커스 이동
-                } else {
-                    // 마지막 칸이면 전송 버튼 클릭
-                    const submitBtn = window.parent.document.querySelector('button[kind="primaryFormSubmit"]');
-                    if (submitBtn) submitBtn.click();
-                }
-            }
-        });
-    });
-</script>
-""", height=0)
-
+# UI 스타일 설정 (기존과 동일)
 st.markdown("""
     <style>
     input {
@@ -220,15 +199,44 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# 엔터키 제어 스크립트 (폼 내부의 엔터를 다음 칸으로 전달)
+st.components.v1.html("""
+<script>
+    const doc = window.parent.document;
+    const inputs = Array.from(doc.querySelectorAll('input'));
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const next = inputs[index + 1];
+                if (next && next.type !== 'submit') {
+                    next.focus();
+                } else {
+                    const submitBtn = doc.querySelector('button[kind="primaryFormSubmit"]');
+                    if (submitBtn) submitBtn.click();
+                }
+            }
+        });
+    });
+</script>
+""", height=0)
+
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
+    
+    # [수정] Pandas 데이터 체크 방식 변경 (ValueError 해결)
     current_last_data = st.session_state.get('last_data', None)
     
-    p_e = current_last_data.get('전기', 0) if current_last_data else 0
-    p_w = current_last_data.get('수도', 0) if current_last_data else 0
-    p_h = current_last_data.get('온수', 0) if current_last_data else 0
-    p_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data else 0.0
-    p_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data else 0.0
+    # 데이터가 있을 때만 가져오고, 없으면 0으로 초기화
+    if current_last_data is not None:
+        p_e = current_last_data.get('전기', 0)
+        p_w = current_last_data.get('수도', 0)
+        p_h = current_last_data.get('온수', 0)
+        p_n = safe_float(current_last_data.get('난방', 0.0))
+        p_c = safe_float(current_last_data.get('냉방', 0.0))
+    else:
+        p_e = p_w = p_h = 0
+        p_n = p_c = 0.0
 
     st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_e})</span>", unsafe_allow_html=True)
     in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전 {p_e}")
@@ -246,9 +254,10 @@ with st.form("inspection_form", clear_on_submit=True):
     in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전 {p_c:.3f}")
 
     st.divider()
+    # [수정] 반드시 st.form 안에 버튼이 위치해야 함
     submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
 
-# --- 8. 데이터 전송 로직 ---
+# --- 8. 데이터 전송 로직 (폼 바깥에서 실행) ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
@@ -258,7 +267,7 @@ if submit:
                 all_rows = sheet.get_all_values()
                 all_rooms_ordered = [r[2] for r in all_rows if len(r) > 2][1:]
                 
-                # 입력값이 없으면 전월값(p_e 등) 사용
+                # 입력값이 없으면 전월값 사용
                 res_e = safe_float(in_e) if in_e else safe_float(p_e)
                 res_w = safe_float(in_w) if in_w else safe_float(p_w)
                 res_h = safe_float(in_h) if in_h else safe_float(p_h)
