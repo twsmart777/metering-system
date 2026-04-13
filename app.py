@@ -219,8 +219,6 @@ if load_btn or (room and st.session_state.get('last_room') != room):
         st.success(f"📊 {room}호 전월 데이터를 불러왔습니다.")
         st.markdown("""
             <style>
-            /* 성공 알림 박스의 글자 크기만 조절 */
-            [data-testid="stNotificationContent"] { font-size: 0.6rem !important; }
             .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
             .reading-box { flex: 1; text-align: center; min-width: 0; }
             .reading-label { color: #95a5a6; font-size: clamp(10px, 3vw, 14px); margin-bottom: 2px; }
