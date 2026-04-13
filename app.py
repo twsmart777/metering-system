@@ -35,13 +35,14 @@ st.markdown("""
         font-size: 35px !important;
         font-weight: bold !important;
     }
-    /* 버튼 크기 확대 */
+    /* 버튼 크기, 글자 크기 확대 및 모서리 곡률 조정 */
     button {
         height: 100px !important;
-        font-size: 30px !important;
+        font-size: 40px !important; /* 여기를 30px에서 40px로 키웠습니다 */
         font-weight: bold !important;
         background-color: #2e86de !important;
         color: white !important;
+        border-radius: 20px !important; /* 모서리를 더 둥글게 깎았습니다 */
     }
     /* 라벨(항목명) 크기 확대 */
     .stMarkdown p, .stMarkdown h3 {
