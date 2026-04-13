@@ -162,7 +162,33 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 7. 검침 수치 입력 폼 ---
+# --- 7. 검침 수치 입력 폼 (글자 및 입력창 대폭 확대 버전) ---
+
+# [설명] 아래 스타일은 입력창(Input) 자체의 높이와 그 안의 글자 크기를 강제로 키웁니다.
+st.markdown("""
+    <style>
+    /* 1. 숫자 입력 칸 높이와 글자 크기 (기존의 3배) */
+    input {
+        height: 100px !important;  /* 칸 높이를 100픽셀로 확대 */
+        font-size: 50px !important; /* 입력되는 숫자 크기를 50포인트로 확대 */
+        font-weight: bold !important;
+        color: #1ed760 !important; /* 입력 숫자를 밝은 녹색으로 강조 */
+    }
+    /* 2. 항목 이름(전기, 수도 등) 글자 크기 */
+    .stMarkdown p {
+        font-size: 35px !important; /* 항목 이름을 35포인트로 확대 */
+        font-weight: bold !important;
+        margin-bottom: -10px !important;
+    }
+    /* 3. 전송 버튼 크기 */
+    .stButton button {
+        height: 120px !important;   /* 버튼을 아주 크게 만듦 */
+        font-size: 40px !important;  /* 버튼 안의 글자 확대 */
+        background-color: #28a745 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
     current_last_data = st.session_state.get('last_data', None)
@@ -173,22 +199,24 @@ with st.form("inspection_form", clear_on_submit=True):
     prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
     prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(f"⚡ **전기** (전월: {prev_e})")
-        in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_e}")
-        st.markdown(f"💧 **수도** (전월: {prev_w})")
-        in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_w}")
-        st.markdown(f"🔥 **온수** (전월: {prev_h})")
-        in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_h}")
-    with col2:
-        st.markdown(f"♨️ **난방** (전월: {prev_n:.3f})")
-        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_n:.3f}")
-        st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f})")
-        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_c:.3f}")
+    # [수정] 가로로 2줄이면 글자가 작아지므로, 세로로 길게 배치하여 가독성을 극대화합니다.
+    st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_e})</span>", unsafe_allow_html=True)
+    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed")
+    
+    st.markdown(f"💧 **수도** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_w})</span>", unsafe_allow_html=True)
+    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed")
+    
+    st.markdown(f"♨️ **온수** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_h})</span>", unsafe_allow_html=True)
+    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed")
+    
+    st.markdown(f"🔥 **난방** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_n:.3f})</span>", unsafe_allow_html=True)
+    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed")
+    
+    st.markdown(f"❄️ **냉방** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_c:.3f})</span>", unsafe_allow_html=True)
+    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed")
 
     st.divider()
-    submit = st.form_submit_button(f"🚀 {selected_building} 전송 후 다음호실 이동", use_container_width=True)
+    submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
 
 # --- 8. 데이터 전송 로직 ---
 if submit:
