@@ -196,32 +196,6 @@ st.markdown("""
         border-color: #000000 !important;
     }
     </style>
-    <script>
-    const doc = window.parent.document;
-    
-    // 엔터 키 이벤트 리스너
-    doc.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            // 모든 텍스트 입력창(호수 포함)을 순서대로 가져옴
-            const inputs = Array.from(doc.querySelectorAll('input[type="text"]:not([type="password"])'));
-            const index = inputs.indexOf(e.target);
-            
-            // 입력창 안에서 엔터를 쳤을 때만 작동
-            if (index > -1) {
-                // 1. 마지막 칸이 아닌 경우: 다음 칸으로 이동하고 전송 막기
-                if (index < inputs.length - 1) {
-                    e.preventDefault(); // 전송(Submit) 방지
-                    inputs[index + 1].focus(); // 다음 칸 포커스
-                } 
-                // 2. 마지막 칸인 경우: 전송 허용하고 안내
-                else {
-                    // 마지막 칸에서는 e.preventDefault()를 하지 않아 폼이 제출되게 둠
-                    console.log("마지막 칸 전송");
-                }
-            }
-        }
-    }, true); // true를 붙여 이벤트 캡처링 단계에서 먼저 가로챔
-    </script>
     """, unsafe_allow_html=True)
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
