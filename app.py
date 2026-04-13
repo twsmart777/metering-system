@@ -176,10 +176,16 @@ st.markdown("""
         font-size: 24px !important;
         font-weight: bold !important;
         
+        /* [중앙 정렬 보정] */
+        display: flex !important;
+        align-items: center !important;     /* 수직 중앙 정렬 */
+        justify-content: center !important;  /* 수평 중앙 정렬 */
+        line-height: 1 !important;           /* 기본 줄높이 초기화 */
+        padding-top: 5px !important;         /* 만약 아래로 쏠려 보이면 0으로, 위로 쏠리면 숫자를 늘리세요 */
+        
         /* [색상 설정] 시스템 다크모드 영향을 받지 않는 선명한 색 */
         background-color: #FFD700 !important; /* 밝은 골드/노란색 */
         color: #000000 !important;           /* 글자는 진한 검정 */
-        border: 3px solid #000000 !important; /* 테두리도 검정으로 명확하게 */
         border-radius: 12px !important;
         color-scheme: light !important;
     }
