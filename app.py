@@ -162,29 +162,41 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 7. 검침 수치 입력 폼 (글자 및 입력창 대폭 확대 버전) ---
+# --- 7. 검침 수치 입력 폼 (글자 잘림 방지 버전) ---
 
-# [설명] 아래 스타일은 입력창(Input) 자체의 높이와 그 안의 글자 크기를 강제로 키웁니다.
 st.markdown("""
     <style>
-    /* 1. 숫자 입력 칸 높이와 글자 크기 (기존의 3배) */
+    /* 1. 입력 칸 설정: 글자가 절대 잘리지 않도록 높이와 간격 조정 */
     input {
-        height: 100px !important;  /* 칸 높이를 100픽셀로 확대 */
-        font-size: 50px !important; /* 입력되는 숫자 크기를 50포인트로 확대 */
+        height: 120px !important;    /* 칸 높이를 조금 더 여유 있게 120px로 확대 */
+        font-size: 60px !important;   /* 글자 크기 60px (아주 크게) */
         font-weight: bold !important;
-        color: #1ed760 !important; /* 입력 숫자를 밝은 녹색으로 강조 */
+        line-height: normal !important; /* 글자 높이 설정을 기본으로 하여 잘림 방지 */
+        padding-top: 10px !important;   /* 위쪽 여백 */
+        padding-bottom: 10px !important; /* 아래쪽 여백 */
+        color: #1ed760 !important;
     }
-    /* 2. 항목 이름(전기, 수도 등) 글자 크기 */
+    
+    /* 2. Streamlit 입력창 기본 최소 높이 제한 해제 */
+    div[data-baseweb="input"] {
+        height: 120px !important;
+        border-radius: 15px !important;
+    }
+
+    /* 3. 항목 이름 글자 크기 (전기, 수도 등) */
     .stMarkdown p {
-        font-size: 35px !important; /* 항목 이름을 35포인트로 확대 */
+        font-size: 35px !important;
         font-weight: bold !important;
-        margin-bottom: -10px !important;
+        margin-top: 20px !important;
+        margin-bottom: 5px !important;
     }
-    /* 3. 전송 버튼 크기 */
+
+    /* 4. 전송 버튼 확대 */
     .stButton button {
-        height: 120px !important;   /* 버튼을 아주 크게 만듦 */
-        font-size: 40px !important;  /* 버튼 안의 글자 확대 */
-        background-color: #28a745 !important;
+        height: 100px !important;
+        font-size: 40px !important;
+        font-weight: bold !important;
+        margin-top: 30px !important;
     }
     </style>
 """, unsafe_allow_html=True)
