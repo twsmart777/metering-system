@@ -143,9 +143,8 @@ st.markdown("""
     /* 3. 입력창 내부 배경색과 글자색 강제 고정 */
     [data-testid="stTextInput"] > div > div {
         height: 75px !important;
-        background-color: #ffffff !important; /* 무조건 흰색 배경 */
-        border: 2px solid #31333F !important; /* 진한 테두리 */
-        color: #000000 !important; /* 글자색 검정 */
+        background-color: #f0f2f6 !important; /* 무조건 흰색 배경 */
+          color: #000000 !important; /* 글자색 검정 */
     }
 
     /* 4. 실제 input 태그 내부 설정 (다크모드에서도 검정글자 유지) */
