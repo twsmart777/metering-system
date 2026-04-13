@@ -120,7 +120,7 @@ def safe_float(val):
 
 st.divider()
 
-# --- 6. 호수 입력 및 데이터 조회 (입력창 자동 갱신 수정) ---
+# --- 6. 호수 입력 및 데이터 조회 (기존 UI 100% 복구) ---
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 room_col, btn_col = st.columns([3, 1])
 
@@ -128,22 +128,20 @@ if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
 with room_col:
-    # [핵심수정] key="room_field"를 추가하여 세션의 room_input과 강제 연결합니다.
-    # 이렇게 하면 st.rerun() 시 세션에 담긴 다음 호수가 화면에 즉시 찍힙니다.
+    # key="room_field"를 추가하여 rerun 시 UI 글자가 강제로 바뀌도록 설정
     room = st.text_input(
         "호수", 
         value=st.session_state['room_input'], 
         placeholder="호수 입력", 
         label_visibility="collapsed",
-        key="room_field" 
+        key="room_field"
     )
-    # 현재 입력된 값을 세션에 동기화
     st.session_state['room_input'] = room
 
 with btn_col:
     load_btn = st.button("조회 🔍", use_container_width=True)
 
-# 조회 버튼을 누르거나 호수값이 세션과 다를 때 실행
+# 조회 로직 (기존과 동일)
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
     last_data = get_last_reading(sheet, room)
@@ -151,18 +149,17 @@ if load_btn or (room and st.session_state.get('last_room') != room):
     
     if last_data is not None:
         st.success(f"📊 {room}호 전월 데이터를 불러왔습니다.")
+        # 전월 데이터 표시 스타일 유지
         st.markdown("""
             <style>
             .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
             .reading-box { flex: 1; text-align: center; min-width: 0; }
-            .reading-label { color: #95a5a6; font-size: clamp(10px, 3vw, 14px); margin-bottom: 2px; }
-            .reading-value { color: white; font-weight: bold; font-size: clamp(12px, 4vw, 18px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .reading-label { color: #95a5a6; font-size: 14px; margin-bottom: 2px; }
+            .reading-value { color: white; font-weight: bold; font-size: 18px; }
             </style>
         """, unsafe_allow_html=True)
-
         h_disp = safe_float(last_data.get('난방', 0.0))
         c_disp = safe_float(last_data.get('냉방', 0.0))
-
         st.markdown(f"""
             <div class="reading-container">
                 <div class="reading-box"><div class="reading-label">전기</div><div class="reading-value">{last_data.get('전기', '-')}</div></div>
@@ -173,80 +170,40 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 7. 검침 수치 입력 폼 (UI 스타일 절대 유지) ---
+# --- 7. 검침 수치 입력 폼 (기존 대형 UI 스타일 그대로 유지) ---
 st.markdown("""
     <style>
-    input {
-        height: 120px !important;
-        font-size: 60px !important;
-        font-weight: bold !important;
-        line-height: normal !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
-        color: #1ed760 !important;
-    }
-    input::placeholder { font-size: 30px !important; color: #95a5a6 !important; }
+    input { height: 120px !important; font-size: 60px !important; font-weight: bold !important; color: #1ed760 !important; }
     div[data-baseweb="input"] { height: 120px !important; border-radius: 15px !important; }
-    .stMarkdown p { font-size: 35px !important; font-weight: bold !important; margin-top: 20px !important; margin-bottom: 5px !important; }
+    .stMarkdown p { font-size: 35px !important; font-weight: bold !important; margin-top: 20px !important; }
     .stButton button { height: 100px !important; font-size: 40px !important; font-weight: bold !important; margin-top: 30px !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 엔터 시 다음 칸 이동 스크립트
-st.components.v1.html("""
-<script>
-    const doc = window.parent.document;
-    const inputs = Array.from(doc.querySelectorAll('input'));
-    inputs.forEach((input, index) => {
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const next = inputs[index + 1];
-                if (next) {
-                    next.focus();
-                } else {
-                    const submitBtn = doc.querySelector('button[kind="primaryFormSubmit"]');
-                    if (submitBtn) submitBtn.click();
-                }
-            }
-        });
-    });
-</script>
-""", height=0)
-
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
-    current_last_data = st.session_state.get('last_data', None)
-    
-    if current_last_data is not None:
-        p_e = current_last_data.get('전기', 0)
-        p_w = current_last_data.get('수도', 0)
-        p_h = current_last_data.get('온수', 0)
-        p_n = safe_float(current_last_data.get('난방', 0.0))
-        p_c = safe_float(current_last_data.get('냉방', 0.0))
-    else:
-        p_e = p_w = p_h = 0
-        p_n = p_c = 0.0
+    c_last = st.session_state.get('last_data', None)
+    p_e = c_last.get('전기', 0) if c_last is not None else 0
+    p_w = c_last.get('수도', 0) if c_last is not None else 0
+    p_h = c_last.get('온수', 0) if c_last is not None else 0
+    p_n = safe_float(c_last.get('난방', 0.0)) if c_last is not None else 0.0
+    p_c = safe_float(c_last.get('냉방', 0.0)) if c_last is not None else 0.0
 
     st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_e})</span>", unsafe_allow_html=True)
     in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전 {p_e}")
-    
     st.markdown(f"💧 **수도** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_w})</span>", unsafe_allow_html=True)
     in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전 {p_w}")
-    
     st.markdown(f"♨️ **온수** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_h})</span>", unsafe_allow_html=True)
     in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전 {p_h}")
-    
     st.markdown(f"🔥 **난방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_n:.3f})</span>", unsafe_allow_html=True)
     in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전 {p_n:.3f}")
-    
     st.markdown(f"❄️ **냉방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_c:.3f})</span>", unsafe_allow_html=True)
     in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전 {p_c:.3f}")
 
     st.divider()
     submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
 
-# --- 8. 데이터 전송 로직 ---
+# --- 8. 데이터 전송 및 다음 호수 자동 이동 (시트 순서 기반) ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
@@ -265,23 +222,23 @@ if submit:
                 now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 row = [now, selected_building, room, round(res_e, 0), round(res_w, 0), round(res_n, 3), round(res_h, 0), round(res_c, 3)]
 
+                # 시트 저장
                 if room in all_rooms_ordered:
                     row_idx = all_rooms_ordered.index(room) + 2
                     sheet.update(range_name=f'A{row_idx}:H{row_idx}', values=[row])
                 else:
                     sheet.append_row(row)
 
-                # 다음 호수 결정
+                # [순서 로직] 현재 호수 다음 칸 찾기
                 next_room = ""
                 if room in all_rooms_ordered:
                     idx = all_rooms_ordered.index(room)
                     if idx + 1 < len(all_rooms_ordered):
                         next_room = all_rooms_ordered[idx + 1]
                 
-                # [수정] 세션 상태 업데이트 및 화면 리프레시
+                # [수정 핵심] 다음 호수를 세션과 입력창 키에 동시 적용
                 st.session_state['room_input'] = next_room
-                # key로 연결된 room_field도 같이 업데이트해주어야 UI에 즉시 반영됩니다.
-                st.session_state['room_field'] = next_room 
+                st.session_state['room_field'] = next_room
                 
                 if 'last_room' in st.session_state: del st.session_state['last_room']
                 if 'last_data' in st.session_state: del st.session_state['last_data']
@@ -291,4 +248,4 @@ if submit:
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 17:24]</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 17:32]</div>", unsafe_allow_html=True)
