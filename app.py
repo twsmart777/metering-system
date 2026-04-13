@@ -269,11 +269,6 @@ with st.form("inspection_form", clear_on_submit=True):
     st.divider()
     submit = st.form_submit_button(f"🚀 전송. 호수이동", use_container_width=True)
 
-# --- [중요] 폼 외부에서 엔터 조작 시 안내 메시지 ---
-# 버튼을 누르지 않았는데 냉방(마지막칸)값이 입력된 상태라면 안내를 띄웁니다.
-if not submit and st.session_state.get('c_v'):
-    st.info("💡 모든 수치를 입력하셨나요? 하단의 **[전송. 호수이동]** 버튼을 눌러주세요!")
-
 # --- 8. 데이터 전송 로직 ---
 if submit:
     if not room:
