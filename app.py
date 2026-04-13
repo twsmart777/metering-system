@@ -214,19 +214,19 @@ with st.form("inspection_form", clear_on_submit=True):
 
     # placeholder 항목을 다시 명시적으로 추가했습니다.
     st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_e})</span>", unsafe_allow_html=True)
-    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_e}")
+    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전 {p_e}")
     
     st.markdown(f"💧 **수도** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_w})</span>", unsafe_allow_html=True)
-    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_w}")
+    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전 {p_w}")
     
     st.markdown(f"♨️ **온수** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_h})</span>", unsafe_allow_html=True)
-    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_h}")
+    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전 {p_h}")
     
     st.markdown(f"🔥 **난방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_n:.3f})</span>", unsafe_allow_html=True)
-    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_n:.3f}")
+    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전 {p_n:.3f}")
     
     st.markdown(f"❄️ **냉방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_c:.3f})</span>", unsafe_allow_html=True)
-    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_c:.3f}")
+    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전 {p_c:.3f}")
 
     st.divider()
     submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
