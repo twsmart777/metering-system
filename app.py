@@ -66,56 +66,88 @@ except Exception as e:
     st.error(f"⚠️ 연결 오류 발생: {e}")
     st.stop()
 
-# --- 5. 화면 디자인 로직 (로고 박스 출력 로직 완전 수정) ---
+# --- 5. 화면 디자인 ---
 
-# 1. 현재 접속이 유효한 현장 링크인지 체크 (True/False)
-is_site_access = url_building in BUILDING_LIST
+st.markdown(f"""
 
-# 2. 현장 접속이 아닐 때(관리자일 때)만 상단 프라임시티 박스 출력
-if is_site_access == False:
-    st.markdown(f"""
-        <div style='text-align: center; background-color: #1c2833; padding: 20px; border-radius: 10px; margin-bottom: 25px;'>
-            <h1 style='color: #ecf0f1; margin: 0; font-size: 45px;'>{COMPANY_NAME}</h1>
-            <p style='color: #95a5a6; margin: 10px 0 0 0; font-size: 24px;'>통합 검침 관리 시스템</p>
-        </div>
-        """, unsafe_allow_html=True)
+    <div style='text-align: center; background-color: #1c2833; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
 
-# 3. 현장 표시 및 선택 영역
-if is_site_access:
-    selected_building = url_building
-    # 현장 링크 접속 시: 로고 없이 현장명만 크게
-    st.markdown(f"""
-        <div style='background-color: #d4edda; padding: 20px; border-radius: 10px; border: 3px solid #28a745; text-align: center; margin-bottom: 25px;'>
-            <h2 style='color: #155724; margin: 0; font-size: 40px;'>🏢 {selected_building}</h2>
-        </div>
+        <h2 style='color: #ecf0f1; margin: 0;'>{COMPANY_NAME}</h2>
+
+        <p style='color: #95a5a6; margin: 5px 0 0 0; font-size: 0.9em;'>현장별 전용 검침 시스템</p>
+
+    </div>
+
     """, unsafe_allow_html=True)
+
+
+
+if url_building in BUILDING_LIST:
+
+    selected_building = url_building
+
+    st.markdown(f"""
+
+        <div style='background-color: #d4edda; padding: 15px; border-radius: 8px; border: 2px solid #28a745; text-align: center;'>
+
+            <h3 style='color: #155724; margin: 0;'>🏢 {selected_building}</h3>
+
+            <p style='margin: 5px 0 0 0; font-weight: bold; color: #155724;'>본인 담당 현장이 맞는지 확인하세요</p>
+
+        </div>
+
+    """, unsafe_allow_html=True)
+
 else:
-    # 관리자 접속 시: 현장 선택 셀렉트박스 표시
-    selected_building = st.selectbox("🏗️ 현장을 선택하세요", ["선택하세요"] + BUILDING_LIST)
+
+    selected_building = st.selectbox("🏗️ 검침 현장을 선택하세요", ["선택하세요"] + BUILDING_LIST)
+
     if selected_building == "선택하세요":
-        st.info("현장을 선택해 주세요.")
+
+        st.info("전용 링크로 접속하거나 현장을 선택해 주세요.")
+
         st.stop()
 
-# --- 시트 연결 및 유틸리티 함수 (여기서부터는 기존과 동일) ---
+
+
 try:
+
     sheet = spreadsheet.worksheet(selected_building)
+
 except gspread.exceptions.WorksheetNotFound:
+
     sheet = spreadsheet.add_worksheet(title=selected_building, rows="1000", cols="10")
+
     sheet.append_row(["일시", "건물명", "호수", "전기", "수도", "난방", "온수", "냉방"])
 
+
+
 def get_last_reading(target_sheet, room_number):
+
     try:
+
         data = target_sheet.get_all_records()
+
         if not data: return None
+
         df = pd.DataFrame(data)
+
         filtered_df = df[df['호수'].astype(str) == str(room_number)]
+
         return filtered_df.iloc[-1] if not filtered_df.empty else None
+
     except: return None
 
+
+
 def safe_float(val):
+
     try:
+
         if val is None or val == "" or str(val).isspace(): return 0.0
+
         return float(val)
+
     except: return 0.0
         
 st.divider()
