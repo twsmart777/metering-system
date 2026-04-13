@@ -120,36 +120,34 @@ def safe_float(val):
 
 st.divider()
 
-# --- 6. 호수 입력 및 데이터 조회 (기존 UI 100% 복구) ---
+# --- 6. 호수 입력 및 데이터 조회 ---
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 room_col, btn_col = st.columns([3, 1])
 
+# 세션 상태 초기화
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
 with room_col:
-    # key="room_field"를 추가하여 rerun 시 UI 글자가 강제로 바뀌도록 설정
+    # key 대신 value만 사용하고, 저장 시점에 st.session_state['room_input']을 업데이트합니다.
     room = st.text_input(
         "호수", 
         value=st.session_state['room_input'], 
         placeholder="호수 입력", 
-        label_visibility="collapsed",
-        key="room_field"
+        label_visibility="collapsed"
     )
-    st.session_state['room_input'] = room
-
+    
 with btn_col:
     load_btn = st.button("조회 🔍", use_container_width=True)
 
-# 조회 로직 (기존과 동일)
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
+    st.session_state['room_input'] = room
     last_data = get_last_reading(sheet, room)
     st.session_state['last_data'] = last_data
     
     if last_data is not None:
         st.success(f"📊 {room}호 전월 데이터를 불러왔습니다.")
-        # 전월 데이터 표시 스타일 유지
         st.markdown("""
             <style>
             .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
@@ -170,7 +168,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 7. 검침 수치 입력 폼 (기존 대형 UI 스타일 그대로 유지) ---
+# --- 7. 검침 수치 입력 폼 (UI 스타일 절대 유지) ---
 st.markdown("""
     <style>
     input { height: 120px !important; font-size: 60px !important; font-weight: bold !important; color: #1ed760 !important; }
@@ -203,7 +201,7 @@ with st.form("inspection_form", clear_on_submit=True):
     st.divider()
     submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
 
-# --- 8. 데이터 전송 및 다음 호수 자동 이동 (시트 순서 기반) ---
+# --- 8. 데이터 전송 및 다음 호수 자동 로직 ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
@@ -222,23 +220,22 @@ if submit:
                 now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 row = [now, selected_building, room, round(res_e, 0), round(res_w, 0), round(res_n, 3), round(res_h, 0), round(res_c, 3)]
 
-                # 시트 저장
                 if room in all_rooms_ordered:
                     row_idx = all_rooms_ordered.index(room) + 2
                     sheet.update(range_name=f'A{row_idx}:H{row_idx}', values=[row])
                 else:
                     sheet.append_row(row)
 
-                # [순서 로직] 현재 호수 다음 칸 찾기
+                # 다음 호수 찾기
                 next_room = ""
                 if room in all_rooms_ordered:
                     idx = all_rooms_ordered.index(room)
                     if idx + 1 < len(all_rooms_ordered):
                         next_room = all_rooms_ordered[idx + 1]
                 
-                # [수정 핵심] 다음 호수를 세션과 입력창 키에 동시 적용
+                # [오류 해결 포인트] 세션 값만 업데이트하고 rerun 합니다.
+                # key="room_field"를 제거하고 value=st.session_state['room_input'] 구조로 돌아왔습니다.
                 st.session_state['room_input'] = next_room
-                st.session_state['room_field'] = next_room
                 
                 if 'last_room' in st.session_state: del st.session_state['last_room']
                 if 'last_data' in st.session_state: del st.session_state['last_data']
@@ -248,4 +245,4 @@ if submit:
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 17:32]</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 17:34]</div>", unsafe_allow_html=True)
