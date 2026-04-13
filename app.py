@@ -196,6 +196,30 @@ st.markdown("""
         border-color: #000000 !important;
     }
     </style>
+    <script>
+    const doc = window.parent.document;
+    
+    // 문서 전체에서 엔터 키 이벤트 차단
+    doc.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            // 입력창(input)에서 엔터를 쳤을 때만 동작 방지
+            if (e.target.tagName === 'INPUT') {
+                e.preventDefault(); // 엔터로 인한 폼 제출 및 새로고침 방지
+                e.stopPropagation(); // 이벤트 전파 중단
+                
+                // (선택사항) 엔터 시 다음 칸으로 커서만 이동시키고 싶을 때 추가
+                const inputs = Array.from(doc.querySelectorAll('input[type="text"]:not([type="password"])'));
+                const index = inputs.indexOf(e.target);
+                if (index > -1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                } else {
+                    // 마지막 칸에서 엔터 시 안내 (필요 없으면 삭제 가능)
+                    console.log("엔터 차단됨 - 전송 버튼을 누르세요.");
+                }
+            }
+        }
+    }, true); 
+    </script>
     """, unsafe_allow_html=True)
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
