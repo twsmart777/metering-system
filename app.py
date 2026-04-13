@@ -168,7 +168,7 @@ st.markdown("""
     [data-testid="stMarkdownContainer"] p {
         font-size: 24px !important; /* 이 숫자를 조절해서 라벨 크기를 변경하세요 */
         font-weight: bold !important;
-        margin-bottom: -12px !important; /* 입력창과의 간격을 좁힘 */
+        margin-bottom: 5px !important; /* 입력창과의 간격을 좁힘 */
     }
     </style>
     """, unsafe_allow_html=True)
