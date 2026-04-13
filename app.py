@@ -66,37 +66,28 @@ except Exception as e:
     st.error(f"⚠️ 연결 오류 발생: {e}")
     st.stop()
 
-# --- 5. 화면 디자인 로직 (로고 박스 출력 로직 완전 수정) ---
+# --- 5. 화면 디자인 ---
+st.markdown(f"""
+    <div style='text-align: center; background-color: #1c2833; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
+        <h2 style='color: #ecf0f1; margin: 0;'>{COMPANY_NAME}</h2>
+        <p style='color: #95a5a6; margin: 5px 0 0 0; font-size: 0.9em;'>현장별 전용 검침 시스템</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# 1. 현재 접속이 유효한 현장 링크인지 체크 (True/False)
-is_site_access = url_building in BUILDING_LIST
-
-# 2. 현장 접속이 아닐 때(관리자일 때)만 상단 프라임시티 박스 출력
-if is_site_access == False:
-    st.markdown(f"""
-        <div style='text-align: center; background-color: #1c2833; padding: 20px; border-radius: 10px; margin-bottom: 25px;'>
-            <h1 style='color: #ecf0f1; margin: 0; font-size: 45px;'>{COMPANY_NAME}</h1>
-            <p style='color: #95a5a6; margin: 10px 0 0 0; font-size: 24px;'>통합 검침 관리 시스템</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-# 3. 현장 표시 및 선택 영역
-if is_site_access:
+if url_building in BUILDING_LIST:
     selected_building = url_building
-    # 현장 링크 접속 시: 로고 없이 현장명만 크게
     st.markdown(f"""
-        <div style='background-color: #d4edda; padding: 20px; border-radius: 10px; border: 3px solid #28a745; text-align: center; margin-bottom: 25px;'>
-            <h2 style='color: #155724; margin: 0; font-size: 40px;'>🏢 {selected_building}</h2>
+        <div style='background-color: #d4edda; padding: 15px; border-radius: 8px; border: 2px solid #28a745; text-align: center;'>
+            <h3 style='color: #155724; margin: 0;'>🏢 {selected_building}</h3>
+            <p style='margin: 5px 0 0 0; font-weight: bold; color: #155724;'>본인 담당 현장이 맞는지 확인하세요</p>
         </div>
     """, unsafe_allow_html=True)
 else:
-    # 관리자 접속 시: 현장 선택 셀렉트박스 표시
-    selected_building = st.selectbox("🏗️ 현장을 선택하세요", ["선택하세요"] + BUILDING_LIST)
+    selected_building = st.selectbox("🏗️ 검침 현장을 선택하세요", ["선택하세요"] + BUILDING_LIST)
     if selected_building == "선택하세요":
-        st.info("현장을 선택해 주세요.")
+        st.info("전용 링크로 접속하거나 현장을 선택해 주세요.")
         st.stop()
 
-# --- 시트 연결 및 유틸리티 함수 (여기서부터는 기존과 동일) ---
 try:
     sheet = spreadsheet.worksheet(selected_building)
 except gspread.exceptions.WorksheetNotFound:
@@ -162,74 +153,33 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 7. 검침 수치 입력 폼 (글자 잘림 방지 버전) ---
-
-st.markdown("""
-    <style>
-    /* 1. 입력 칸 설정: 글자가 절대 잘리지 않도록 높이와 간격 조정 */
-    input {
-        height: 120px !important;    /* 칸 높이를 조금 더 여유 있게 120px로 확대 */
-        font-size: 60px !important;   /* 글자 크기 60px (아주 크게) */
-        font-weight: bold !important;
-        line-height: normal !important; /* 글자 높이 설정을 기본으로 하여 잘림 방지 */
-        padding-top: 10px !important;   /* 위쪽 여백 */
-        padding-bottom: 10px !important; /* 아래쪽 여백 */
-        color: #1ed760 !important;
-    }
-    
-    /* 2. Streamlit 입력창 기본 최소 높이 제한 해제 */
-    div[data-baseweb="input"] {
-        height: 120px !important;
-        border-radius: 15px !important;
-    }
-
-    /* 3. 항목 이름 글자 크기 (전기, 수도 등) */
-    .stMarkdown p {
-        font-size: 35px !important;
-        font-weight: bold !important;
-        margin-top: 20px !important;
-        margin-bottom: 5px !important;
-    }
-
-    /* 4. 전송 버튼 확대 */
-    .stButton button {
-        height: 100px !important;
-        font-size: 40px !important;
-        font-weight: bold !important;
-        margin-top: 30px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
+# --- 7. 검침 수치 입력 폼 ---
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
     current_last_data = st.session_state.get('last_data', None)
     
-    # 전월 데이터 변수 (위에서 계산된 값 그대로 사용)
-    p_e = current_last_data.get('전기', 0) if current_last_data is not None else 0
-    p_w = current_last_data.get('수도', 0) if current_last_data is not None else 0
-    p_h = current_last_data.get('온수', 0) if current_last_data is not None else 0
-    p_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
-    p_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
+    prev_e = current_last_data.get('전기', 0) if current_last_data is not None else 0
+    prev_w = current_last_data.get('수도', 0) if current_last_data is not None else 0
+    prev_h = current_last_data.get('온수', 0) if current_last_data is not None else 0
+    prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
+    prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
 
-    # placeholder 항목을 다시 명시적으로 추가했습니다.
-    st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_e})</span>", unsafe_allow_html=True)
-    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전 {p_e}")
-    
-    st.markdown(f"💧 **수도** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_w})</span>", unsafe_allow_html=True)
-    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전 {p_w}")
-    
-    st.markdown(f"♨️ **온수** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_h})</span>", unsafe_allow_html=True)
-    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전 {p_h}")
-    
-    st.markdown(f"🔥 **난방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_n:.3f})</span>", unsafe_allow_html=True)
-    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전 {p_n:.3f}")
-    
-    st.markdown(f"❄️ **냉방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_c:.3f})</span>", unsafe_allow_html=True)
-    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전 {p_c:.3f}")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"⚡ **전기** (전월: {prev_e})")
+        in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_e}")
+        st.markdown(f"💧 **수도** (전월: {prev_w})")
+        in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_w}")
+        st.markdown(f"♨️ **온수** (전월: {prev_h})")
+        in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_h}")
+    with col2:
+        st.markdown(f"🔥 **난방** (전월: {prev_n:.3f})")
+        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_n:.3f}")
+        st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f})")
+        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전검침량: {prev_c:.3f}")
 
     st.divider()
-    submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
+    submit = st.form_submit_button(f"🚀 {selected_building} 전송 후 다음호실 이동", use_container_width=True)
 
 # --- 8. 데이터 전송 로직 ---
 if submit:
