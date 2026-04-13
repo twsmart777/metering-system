@@ -120,7 +120,7 @@ def safe_float(val):
 
 st.divider()
 
-# --- 6. 호수 입력 및 데이터 조회 (UI 완벽 복구) ---
+# --- 6. 호수 입력 및 데이터 조회 ---
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 room_col, btn_col = st.columns([3, 1])
 
@@ -128,16 +128,14 @@ if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
 with room_col:
-    # 기존과 동일한 호수 입력창
-    room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
+    # key를 부여하여 세션 상태와 연동 (다음 호수 자동 반영을 위함)
+    room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed", key="room_field")
+    st.session_state['room_input'] = room
 with btn_col:
-    # 기존과 동일한 조회 버튼
     load_btn = st.button("조회 🔍", use_container_width=True)
 
-# 조회 버튼을 누르거나 호수 입력 후 엔터를 쳤을 때 실행
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
-    st.session_state['room_input'] = room
     last_data = get_last_reading(sheet, room)
     st.session_state['last_data'] = last_data
     
@@ -147,8 +145,8 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             <style>
             .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
             .reading-box { flex: 1; text-align: center; min-width: 0; }
-            .reading-label { color: #95a5a6; font-size: clamp(10px, 3vw, 14px); margin-bottom: 2px; }
-            .reading-value { color: white; font-weight: bold; font-size: clamp(12px, 4vw, 18px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .reading-label { color: #95a5a6; font-size: 14px; margin-bottom: 2px; }
+            .reading-value { color: white; font-weight: bold; font-size: 18px; }
             </style>
         """, unsafe_allow_html=True)
 
@@ -165,7 +163,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 7. 검침 수치 입력 폼 (UI 유지 + 엔터 기능) ---
+# --- 7. 검침 수치 입력 폼 (UI 절대 유지) ---
 
 st.markdown("""
     <style>
@@ -184,28 +182,6 @@ st.markdown("""
     .stButton button { height: 100px !important; font-size: 40px !important; font-weight: bold !important; margin-top: 30px !important; }
     </style>
 """, unsafe_allow_html=True)
-
-# 엔터 시 다음 칸 이동 스크립트
-st.components.v1.html("""
-<script>
-    const doc = window.parent.document;
-    const inputs = Array.from(doc.querySelectorAll('input'));
-    inputs.forEach((input, index) => {
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const next = inputs[index + 1];
-                if (next) {
-                    next.focus();
-                } else {
-                    const submitBtn = doc.querySelector('button[kind="primaryFormSubmit"]');
-                    if (submitBtn) submitBtn.click();
-                }
-            }
-        });
-    });
-</script>
-""", height=0)
 
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
@@ -239,7 +215,7 @@ with st.form("inspection_form", clear_on_submit=True):
     st.divider()
     submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
 
-# --- 8. 데이터 전송 로직 ---
+# --- 8. 데이터 전송 및 호수 전환 로직 ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
@@ -264,7 +240,7 @@ if submit:
                 else:
                     sheet.append_row(row)
 
-                # 다음 호수 결정
+                # [핵심] 다음 호수 결정 및 세션 업데이트
                 next_room = ""
                 if room in all_rooms_ordered:
                     idx = all_rooms_ordered.index(room)
@@ -274,8 +250,11 @@ if submit:
                 st.session_state['room_input'] = next_room
                 if 'last_room' in st.session_state: del st.session_state['last_room']
                 if 'last_data' in st.session_state: del st.session_state['last_data']
-                st.rerun()
+                
+                st.toast(f"✅ {room}호 저장 완료! 다음 호수({next_room})로 이동합니다.")
+                st.rerun() # 화면을 다시 그려서 상단 입력창에 차기 호수 반영
+                
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 17:15]</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 17:16]</div>", unsafe_allow_html=True)
