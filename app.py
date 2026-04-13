@@ -50,20 +50,29 @@ if not st.session_state['authenticated']:
             st.error("❌ 비밀번호가 일치하지 않습니다.")
     st.stop()
 
-# --- 4. 구글 시트 연결 (인증 통과 후) ---
-try:
-    if os.path.exists(JSON_FILE):
-        creds = Credentials.from_service_account_file(JSON_FILE, scopes=scope)
-    else:
-        info = dict(st.secrets["gcp_service_account"])
-        info["private_key"] = info["private_key"].replace("\\n", "\n")
-        creds = Credentials.from_service_account_info(info, scopes=scope)
-    
-    client = gspread.authorize(creds)
-    spreadsheet = client.open("검침데이터_관리")
-    
-except Exception as e:
-    st.error(f"⚠️ 연결 오류 발생: {e}")
+# --- 4. 구글 시트 연결 ---
+@st.cache_resource
+def get_gspread_client():
+    try:
+        if os.path.exists(JSON_FILE):
+            creds = Credentials.from_service_account_file(JSON_FILE, scopes=scope)
+        else:
+            info = dict(st.secrets["gcp_service_account"])
+            info["private_key"] = info["private_key"].replace("\\n", "\n")
+            creds = Credentials.from_service_account_info(info, scopes=scope)
+        return gspread.authorize(creds)
+    except Exception as e:
+        st.error(f"⚠️ 연결 오류 발생: {e}")
+        return None
+
+client = get_gspread_client()
+if client:
+    try:
+        spreadsheet = client.open("검침데이터_관리")
+    except Exception as e:
+        st.error(f"⚠️ 시트 열기 실패: {e}")
+        st.stop()
+else:
     st.stop()
 
 # --- 5. 화면 디자인 로직 (수정됨) ---
