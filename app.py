@@ -22,40 +22,6 @@ scope = [
 # --- 2. 화면 설정 및 파라미터 읽기 (인증 판별용) ---
 st.set_page_config(page_title=f"{COMPANY_NAME} 통합검침", layout="centered")
 
-# [어르신 맞춤형 왕버튼 및 왕글씨 스타일]
-st.markdown("""
-    <style>
-    /* 전체 글자 크기 키우기 */
-    html, body, [class*="css"] {
-        font-size: 24px !important;
-    }
-    /* 입력창 높이 및 글자 크기 3배 수준 확대 */
-    input {
-        height: 80px !important;
-        font-size: 35px !important;
-        font-weight: bold !important;
-    }
-    /* 버튼 크기 확대 */
-    button {
-        height: 100px !important;
-        font-size: 30px !important;
-        font-weight: bold !important;
-        background-color: #2e86de !important;
-        color: white !important;
-    }
-    /* 라벨(항목명) 크기 확대 */
-    .stMarkdown p, .stMarkdown h3 {
-        font-size: 32px !important;
-        font-weight: bold !important;
-    }
-    /* 선택 박스 크기 확대 */
-    div[data-baseweb="select"] {
-        height: 80px !important;
-        font-size: 28px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 # 주소창 파라미터 읽기
 url_params = st.query_params
 url_building = url_params.get("b", None)
