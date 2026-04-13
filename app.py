@@ -128,20 +128,27 @@ def safe_float(val):
 st.divider()
 
 # --- 6. 호수 입력 및 데이터 조회 ---
-
 # 1. 여기에 스타일 코드를 삽입합니다.
 st.markdown("""
     <style>
-    /* 1. 입력창 전체 컨테이너의 높이 조절 */
-    div[data-testid="stTextInput"] > div > div {
+    /* 1. 입력창의 전체 높이를 결정하는 외부 박스들 모두 강제 지정 */
+    [data-testid="stTextInput"] > div {
         height: 70px !important;
+        min-height: 70px !important;
     }
-    
-    /* 2. 실제 input 태그의 높이와 텍스트 정렬 */
-    div[data-testid="stTextInput"] input {
+
+    /* 2. 입력창 내부 디자인(패딩, 테두리 등) 박스 강제 지정 */
+    [data-testid="stTextInput"] > div > div {
         height: 70px !important;
-        font-size: 30px !important;
-        line-height: 70px !important;
+        background-color: #31333F !important; /* 배경색 유지 */
+    }
+
+    /* 3. 실제 글자가 써지는 영역 강제 지정 */
+    [data-testid="stTextInput"] input {
+        height: 70px !important;
+        font-size: 28px !important;
+        padding: 10px !important;
+        font-weight: bold !important;
     }
     </style>
     """, unsafe_allow_html=True)
