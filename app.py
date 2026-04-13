@@ -68,12 +68,12 @@ except Exception as e:
 
 # --- 5. 화면 디자인 로직 (수정됨) ---
 
-# [수정] url_building(현장 파라미터)이 없을 때만 상단 프라임시티 로고 박스를 표시
-if not url_building:
+# url_building이 없거나(None), 값이 비어있을("") 때만 관리자용 로고 박스 표시
+if url_building is None or url_building == "":
     st.markdown(f"""
-        <div style='text-align: center; background-color: #1c2833; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
-            <h2 style='color: #ecf0f1; margin: 0;'>{COMPANY_NAME}</h2>
-            <p style='color: #95a5a6; margin: 5px 0 0 0; font-size: 0.9em;'>통합 검침 관리 시스템</p>
+        <div style='text-align: center; background-color: #1c2833; padding: 20px; border-radius: 10px; margin-bottom: 25px;'>
+            <h1 style='color: #ecf0f1; margin: 0; font-size: 45px;'>{COMPANY_NAME}</h1>
+            <p style='color: #95a5a6; margin: 10px 0 0 0; font-size: 24px;'>통합 검침 관리 시스템</p>
         </div>
         """, unsafe_allow_html=True)
 
