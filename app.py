@@ -196,28 +196,6 @@ st.markdown("""
         border-color: #000000 !important;
     }
     </style>
-    <script>
-    // 브라우저 최상단에서 엔터 키를 가로채서 버립니다.
-    const doc = window.parent.document;
-    
-    doc.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.keyCode === 13) {
-            // 입력창에서 엔터가 눌리면
-            if (e.target.tagName === 'INPUT') {
-                e.preventDefault(); // 전송 방지
-                e.stopImmediatePropagation(); // 폼에 신호 전달 차단
-                
-                // [편의기능] 다음 칸으로 커서만 옮겨주기
-                const inputs = Array.from(doc.querySelectorAll('input[type="text"]:not([type="password"])'));
-                const index = inputs.indexOf(e.target);
-                if (index > -1 && index < inputs.length - 1) {
-                    inputs[index + 1].focus();
-                }
-                return false;
-            }
-        }
-    }, true); // 'true' 옵션이 매우 중요합니다 (캡처링 단계 차단)
-    </script>
     """, unsafe_allow_html=True)
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
