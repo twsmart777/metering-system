@@ -128,27 +128,41 @@ def safe_float(val):
 st.divider()
 
 # --- 6. 호수 입력 및 데이터 조회 ---
-# 1. 여기에 스타일 코드를 삽입합니다.
 st.markdown("""
     <style>
-    /* 1. 입력창의 전체 높이를 결정하는 외부 박스들 모두 강제 지정 */
+    /* 1. 전체 위젯에 대해 시스템 다크모드 강제 무시 */
+    [data-testid="stTextInput"] {
+        color-scheme: light !important;
+    }
+
+    /* 2. 입력창 전체 컨테이너 높이 */
     [data-testid="stTextInput"] > div {
-        height: 70px !important;
-        min-height: 70px !important;
+        height: 75px !important;
     }
 
-    /* 2. 입력창 내부 디자인(패딩, 테두리 등) 박스 강제 지정 */
+    /* 3. 입력창 내부 배경색과 글자색 강제 고정 */
     [data-testid="stTextInput"] > div > div {
-        height: 70px !important;
-        background-color: #f0f2f6 !important; /* 배경색 유지 */
+        height: 75px !important;
+        background-color: #ffffff !important; /* 무조건 흰색 배경 */
+        border: 2px solid #31333F !important; /* 진한 테두리 */
+        color: #000000 !important; /* 글자색 검정 */
     }
 
-    /* 3. 실제 글자가 써지는 영역 강제 지정 */
+    /* 4. 실제 input 태그 내부 설정 (다크모드에서도 검정글자 유지) */
     [data-testid="stTextInput"] input {
-        height: 70px !important;
-        font-size: 28px !important;
-        padding: 10px !important;
+        height: 75px !important;
+        font-size: 30px !important;
         font-weight: bold !important;
+        color: #000000 !important; /* 글자색 검정 */
+        -webkit-text-fill-color: #000000 !important; /* iOS/사파리 강제 검정색 */
+        background-color: transparent !important;
+        padding: 0 15px !important;
+    }
+
+    /* 5. 플레이스홀더(안내문구) 색상도 흐린 회색으로 고정 */
+    [data-testid="stTextInput"] input::placeholder {
+        color: #888888 !important;
+        -webkit-text-fill-color: #888888 !important;
     }
     </style>
     """, unsafe_allow_html=True)
