@@ -282,4 +282,4 @@ if submit:
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-12 05:45]</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 19:07]</div>", unsafe_allow_html=True)
