@@ -162,41 +162,39 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 7. 검침 수치 입력 폼 (글자 잘림 방지 버전) ---
+# --- 7. 검침 수치 입력 폼 (안내 문구 복구 및 글자 최적화) ---
 
 st.markdown("""
     <style>
-    /* 1. 입력 칸 설정: 글자가 절대 잘리지 않도록 높이와 간격 조정 */
+    /* 1. 입력창 전체 설정 */
     input {
-        height: 120px !important;    /* 칸 높이를 조금 더 여유 있게 120px로 확대 */
-        font-size: 60px !important;   /* 글자 크기 60px (아주 크게) */
+        height: 120px !important;    /* 칸 높이 */
+        font-size: 55px !important;   /* 글자 크기 (살짝 조정하여 여유 확보) */
         font-weight: bold !important;
-        line-height: normal !important; /* 글자 높이 설정을 기본으로 하여 잘림 방지 */
-        padding-top: 10px !important;   /* 위쪽 여백 */
-        padding-bottom: 10px !important; /* 아래쪽 여백 */
-        color: #1ed760 !important;
+        line-height: normal !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        color: #1ed760 !important;   /* 내가 입력하는 숫자 색상 (연두) */
     }
     
-    /* 2. Streamlit 입력창 기본 최소 높이 제한 해제 */
-    div[data-baseweb="input"] {
-        height: 120px !important;
-        border-radius: 15px !important;
+    /* 2. [추가] 사라진 안내 문구(Placeholder)를 보이게 설정 */
+    input::placeholder {
+        font-size: 24px !important;  /* 안내 문구는 너무 크면 잘리므로 24px로 설정 */
+        color: #95a5a6 !important;   /* 안내 문구 색상 (회색) */
+        vertical-align: middle !important;
     }
 
-    /* 3. 항목 이름 글자 크기 (전기, 수도 등) */
+    /* 3. 항목 이름 글자 크기 */
     .stMarkdown p {
         font-size: 35px !important;
         font-weight: bold !important;
         margin-top: 20px !important;
-        margin-bottom: 5px !important;
     }
 
-    /* 4. 전송 버튼 확대 */
+    /* 4. 버튼 설정 */
     .stButton button {
         height: 100px !important;
-        font-size: 40px !important;
-        font-weight: bold !important;
-        margin-top: 30px !important;
+        font-size: 35px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -205,27 +203,28 @@ with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
     current_last_data = st.session_state.get('last_data', None)
     
-    prev_e = current_last_data.get('전기', 0) if current_last_data is not None else 0
-    prev_w = current_last_data.get('수도', 0) if current_last_data is not None else 0
-    prev_h = current_last_data.get('온수', 0) if current_last_data is not None else 0
-    prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
-    prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
+    # 전월 데이터 변수 (위에서 계산된 값 그대로 사용)
+    p_e = current_last_data.get('전기', 0) if current_last_data is not None else 0
+    p_w = current_last_data.get('수도', 0) if current_last_data is not None else 0
+    p_h = current_last_data.get('온수', 0) if current_last_data is not None else 0
+    p_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
+    p_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
 
-    # [수정] 가로로 2줄이면 글자가 작아지므로, 세로로 길게 배치하여 가독성을 극대화합니다.
-    st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_e})</span>", unsafe_allow_html=True)
-    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed")
+    # placeholder 항목을 다시 명시적으로 추가했습니다.
+    st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_e})</span>", unsafe_allow_html=True)
+    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_e}")
     
-    st.markdown(f"💧 **수도** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_w})</span>", unsafe_allow_html=True)
-    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed")
+    st.markdown(f"💧 **수도** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_w})</span>", unsafe_allow_html=True)
+    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_w}")
     
-    st.markdown(f"♨️ **온수** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_h})</span>", unsafe_allow_html=True)
-    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed")
+    st.markdown(f"♨️ **온수** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_h})</span>", unsafe_allow_html=True)
+    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_h}")
     
-    st.markdown(f"🔥 **난방** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_n:.3f})</span>", unsafe_allow_html=True)
-    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed")
+    st.markdown(f"🔥 **난방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_n:.3f})</span>", unsafe_allow_html=True)
+    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_n:.3f}")
     
-    st.markdown(f"❄️ **냉방** <span style='font-size:24px; color:#95a5a6;'>(전월: {prev_c:.3f})</span>", unsafe_allow_html=True)
-    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed")
+    st.markdown(f"❄️ **냉방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_c:.3f})</span>", unsafe_allow_html=True)
+    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전검침량: {p_c:.3f}")
 
     st.divider()
     submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
