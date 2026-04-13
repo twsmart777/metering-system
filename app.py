@@ -120,86 +120,25 @@ def safe_float(val):
 
 st.divider()
 
-# --- 6. 호수 입력 및 데이터 조회 ---
-st.markdown(f"### 🔢 {selected_building} 호수 입력")
-room_col, btn_col = st.columns([3, 1])
+# --- 6 & 7. 검침 통합 입력 폼 (호수 자동 전환 및 엔터 제어) ---
 
-if 'room_input' not in st.session_state:
-    st.session_state['room_input'] = ""
-
-with room_col:
-    room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
-with btn_col:
-    load_btn = st.button("조회 🔍", use_container_width=True)
-
-if load_btn or (room and st.session_state.get('last_room') != room):
-    st.session_state['last_room'] = room
-    st.session_state['room_input'] = room
-    last_data = get_last_reading(sheet, room)
-    st.session_state['last_data'] = last_data
-    
-    if last_data is not None:
-        st.success(f"📊 {room}호 전월 데이터를 불러왔습니다.")
-        st.markdown("""
-            <style>
-            .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
-            .reading-box { flex: 1; text-align: center; min-width: 0; }
-            .reading-label { color: #95a5a6; font-size: clamp(10px, 3vw, 14px); margin-bottom: 2px; }
-            .reading-value { color: white; font-weight: bold; font-size: clamp(12px, 4vw, 18px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            </style>
-        """, unsafe_allow_html=True)
-
-        h_disp = safe_float(last_data.get('난방', 0.0))
-        c_disp = safe_float(last_data.get('냉방', 0.0))
-
-        st.markdown(f"""
-            <div class="reading-container">
-                <div class="reading-box"><div class="reading-label">전기</div><div class="reading-value">{last_data.get('전기', '-')}</div></div>
-                <div class="reading-box"><div class="reading-label">수도</div><div class="reading-value">{last_data.get('수도', '-')}</div></div>
-                <div class="reading-box"><div class="reading-label">온수</div><div class="reading-value">{last_data.get('온수', '-')}</div></div>
-                <div class="reading-box"><div class="reading-label">난방</div><div class="reading-value">{h_disp:.3f}</div></div>
-                <div class="reading-box"><div class="reading-label">냉방</div><div class="reading-value">{c_disp:.3f}</div></div>
-            </div>
-        """, unsafe_allow_html=True)
-
-# --- 7. 검침 수치 입력 폼 및 데이터 전송 통합 ---
-
-# UI 스타일 설정 (기존과 동일)
+# UI 스타일 설정
 st.markdown("""
     <style>
     input {
         height: 120px !important;
         font-size: 60px !important;
         font-weight: bold !important;
-        line-height: normal !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
         color: #1ed760 !important;
     }
-    input::placeholder {
-        font-size: 30px !important;
-        color: #95a5a6 !important;
-    }
-    div[data-baseweb="input"] {
-        height: 120px !important;
-        border-radius: 15px !important;
-    }
-    .stMarkdown p {
-        font-size: 35px !important;
-        font-weight: bold !important;
-        margin-top: 20px !important;
-        margin-bottom: 5px !important;
-    }
-    .stButton button {
-        height: 100px !important;
-        font-size: 40px !important;
-        font-weight: bold !important;
-        margin-top: 30px !important;
-    }
+    input::placeholder { font-size: 30px !important; color: #95a5a6 !important; }
+    div[data-baseweb="input"] { height: 120px !important; border-radius: 15px !important; }
+    .stMarkdown p { font-size: 35px !important; font-weight: bold !important; margin-top: 20px !important; }
+    .stButton button { height: 100px !important; font-size: 40px !important; font-weight: bold !important; margin-top: 30px !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 엔터키 제어 스크립트 (폼 내부의 엔터를 다음 칸으로 전달)
+# 엔터키 제어 JavaScript (폼 내부 엔터 -> 다음 칸 / 마지막 -> 전송)
 st.components.v1.html("""
 <script>
     const doc = window.parent.document;
@@ -221,23 +160,33 @@ st.components.v1.html("""
 </script>
 """, height=0)
 
-with st.form("inspection_form", clear_on_submit=True):
-    st.markdown("### ✍️ 당월 수치 입력")
+# 세션 상태 초기화
+if 'room_input' not in st.session_state:
+    st.session_state['room_input'] = ""
+
+with st.form("inspection_form", clear_on_submit=False): # 다음 호수 유지를 위해 False로 설정
+    st.markdown(f"### 🔢 {selected_building} 정보 입력")
     
-    # [수정] Pandas 데이터 체크 방식 변경 (ValueError 해결)
-    current_last_data = st.session_state.get('last_data', None)
+    # [중요] 호수 입력창을 폼 안으로 넣어 엔터 흐름에 포함시킴
+    room = st.text_input("호수", value=st.session_state['room_input'], key="room_val", placeholder="호수 입력")
     
-    # 데이터가 있을 때만 가져오고, 없으면 0으로 초기화
-    if current_last_data is not None:
-        p_e = current_last_data.get('전기', 0)
-        p_w = current_last_data.get('수도', 0)
-        p_h = current_last_data.get('온수', 0)
-        p_n = safe_float(current_last_data.get('난방', 0.0))
-        p_c = safe_float(current_last_data.get('냉방', 0.0))
+    # 데이터 조회 로직 (호수가 바뀔 때 자동으로 전월 데이터 매칭)
+    last_data = get_last_reading(sheet, room) if room else None
+    
+    if last_data is not None:
+        p_e = last_data.get('전기', 0)
+        p_w = last_data.get('수도', 0)
+        p_h = last_data.get('온수', 0)
+        p_n = safe_float(last_data.get('난방', 0.0))
+        p_c = safe_float(last_data.get('냉방', 0.0))
+        st.info(f"📊 {room}호 전월 데이터를 불러왔습니다.")
     else:
         p_e = p_w = p_h = 0
         p_n = p_c = 0.0
 
+    st.divider()
+    st.markdown("### ✍️ 당월 수치 입력")
+    
     st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_e})</span>", unsafe_allow_html=True)
     in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전 {p_e}")
     
@@ -254,16 +203,15 @@ with st.form("inspection_form", clear_on_submit=True):
     in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전 {p_c:.3f}")
 
     st.divider()
-    # [수정] 반드시 st.form 안에 버튼이 위치해야 함
     submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
 
-# --- 8. 데이터 전송 로직 (폼 바깥에서 실행) ---
+# --- 8. 데이터 전송 로직 ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
     else:
         try:
-            with st.spinner("데이터 처리 중..."):
+            with st.spinner("저장 중..."):
                 all_rows = sheet.get_all_values()
                 all_rooms_ordered = [r[2] for r in all_rows if len(r) > 2][1:]
                 
@@ -280,21 +228,145 @@ if submit:
                 if room in all_rooms_ordered:
                     row_idx = all_rooms_ordered.index(room) + 2
                     sheet.update(range_name=f'A{row_idx}:H{row_idx}', values=[row])
-                    st.toast(f"✅ {room}호 데이터 수정 완료!")
                 else:
                     sheet.append_row(row)
-                    st.toast(f"✅ {room}호 저장 완료!")
 
+                # [핵심] 다음 호수 결정 및 세션 업데이트
                 next_room = ""
                 if room in all_rooms_ordered:
                     idx = all_rooms_ordered.index(room)
                     if idx + 1 < len(all_rooms_ordered):
                         next_room = all_rooms_ordered[idx + 1]
                 
-                st.session_state['room_input'] = next_room
-                if 'last_room' in st.session_state: del st.session_state['last_room']
-                if 'last_data' in st.session_state: del st.session_state['last_data']
-                st.rerun()
+                st.session_state['room_input'] = next_room  # 다음 호수를 세션에 저장
+                st.toast(f"✅ {room}호 저장 완료! 다음 호수({next_room})로 이동합니다.")
+                st.rerun()  # 화면을 새로고침하여 다음 호수를 value에 반영
+                
+        except Exception as e:
+            st.error(f"❗ 오류 발생: {e}")
+
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-13 17:15]</div>", unsafe_allow_html=True)# --- 6 & 7. 검침 통합 입력 폼 (호수 자동 전환 및 엔터 제어) ---
+
+# UI 스타일 설정
+st.markdown("""
+    <style>
+    input {
+        height: 120px !important;
+        font-size: 60px !important;
+        font-weight: bold !important;
+        color: #1ed760 !important;
+    }
+    input::placeholder { font-size: 30px !important; color: #95a5a6 !important; }
+    div[data-baseweb="input"] { height: 120px !important; border-radius: 15px !important; }
+    .stMarkdown p { font-size: 35px !important; font-weight: bold !important; margin-top: 20px !important; }
+    .stButton button { height: 100px !important; font-size: 40px !important; font-weight: bold !important; margin-top: 30px !important; }
+    </style>
+""", unsafe_allow_html=True)
+
+# 엔터키 제어 JavaScript (폼 내부 엔터 -> 다음 칸 / 마지막 -> 전송)
+st.components.v1.html("""
+<script>
+    const doc = window.parent.document;
+    const inputs = Array.from(doc.querySelectorAll('input'));
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const next = inputs[index + 1];
+                if (next && next.type !== 'submit') {
+                    next.focus();
+                } else {
+                    const submitBtn = doc.querySelector('button[kind="primaryFormSubmit"]');
+                    if (submitBtn) submitBtn.click();
+                }
+            }
+        });
+    });
+</script>
+""", height=0)
+
+# 세션 상태 초기화
+if 'room_input' not in st.session_state:
+    st.session_state['room_input'] = ""
+
+with st.form("inspection_form", clear_on_submit=False): # 다음 호수 유지를 위해 False로 설정
+    st.markdown(f"### 🔢 {selected_building} 정보 입력")
+    
+    # [중요] 호수 입력창을 폼 안으로 넣어 엔터 흐름에 포함시킴
+    room = st.text_input("호수", value=st.session_state['room_input'], key="room_val", placeholder="호수 입력")
+    
+    # 데이터 조회 로직 (호수가 바뀔 때 자동으로 전월 데이터 매칭)
+    last_data = get_last_reading(sheet, room) if room else None
+    
+    if last_data is not None:
+        p_e = last_data.get('전기', 0)
+        p_w = last_data.get('수도', 0)
+        p_h = last_data.get('온수', 0)
+        p_n = safe_float(last_data.get('난방', 0.0))
+        p_c = safe_float(last_data.get('냉방', 0.0))
+        st.info(f"📊 {room}호 전월 데이터를 불러왔습니다.")
+    else:
+        p_e = p_w = p_h = 0
+        p_n = p_c = 0.0
+
+    st.divider()
+    st.markdown("### ✍️ 당월 수치 입력")
+    
+    st.markdown(f"⚡ **전기** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_e})</span>", unsafe_allow_html=True)
+    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"직전 {p_e}")
+    
+    st.markdown(f"💧 **수도** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_w})</span>", unsafe_allow_html=True)
+    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"직전 {p_w}")
+    
+    st.markdown(f"♨️ **온수** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_h})</span>", unsafe_allow_html=True)
+    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"직전 {p_h}")
+    
+    st.markdown(f"🔥 **난방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_n:.3f})</span>", unsafe_allow_html=True)
+    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"직전 {p_n:.3f}")
+    
+    st.markdown(f"❄️ **냉방** <span style='font-size:24px; color:#95a5a6;'>(전월: {p_c:.3f})</span>", unsafe_allow_html=True)
+    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"직전 {p_c:.3f}")
+
+    st.divider()
+    submit = st.form_submit_button(f"🚀 {selected_building} 데이터 저장 후 이동", use_container_width=True)
+
+# --- 8. 데이터 전송 로직 ---
+if submit:
+    if not room:
+        st.error("❗ 호수를 입력해 주세요.")
+    else:
+        try:
+            with st.spinner("저장 중..."):
+                all_rows = sheet.get_all_values()
+                all_rooms_ordered = [r[2] for r in all_rows if len(r) > 2][1:]
+                
+                # 입력값이 없으면 전월값 사용
+                res_e = safe_float(in_e) if in_e else safe_float(p_e)
+                res_w = safe_float(in_w) if in_w else safe_float(p_w)
+                res_h = safe_float(in_h) if in_h else safe_float(p_h)
+                res_n = safe_float(in_n) if in_n else safe_float(p_n)
+                res_c = safe_float(in_c) if in_c else safe_float(p_c)
+
+                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                row = [now, selected_building, room, round(res_e, 0), round(res_w, 0), round(res_n, 3), round(res_h, 0), round(res_c, 3)]
+
+                if room in all_rooms_ordered:
+                    row_idx = all_rooms_ordered.index(room) + 2
+                    sheet.update(range_name=f'A{row_idx}:H{row_idx}', values=[row])
+                else:
+                    sheet.append_row(row)
+
+                # [핵심] 다음 호수 결정 및 세션 업데이트
+                next_room = ""
+                if room in all_rooms_ordered:
+                    idx = all_rooms_ordered.index(room)
+                    if idx + 1 < len(all_rooms_ordered):
+                        next_room = all_rooms_ordered[idx + 1]
+                
+                st.session_state['room_input'] = next_room  # 다음 호수를 세션에 저장
+                st.toast(f"✅ {room}호 저장 완료! 다음 호수({next_room})로 이동합니다.")
+                st.rerun()  # 화면을 새로고침하여 다음 호수를 value에 반영
+                
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
