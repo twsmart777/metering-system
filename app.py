@@ -133,7 +133,7 @@ st.divider()
 st.markdown("""
     <style>
     div[data-testid="stTextInput"] input {
-        height: 180px !important;
+        height: 50px !important;
         font-size: 20px !important;
         font-weight: bold;
     }
