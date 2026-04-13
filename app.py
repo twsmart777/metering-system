@@ -128,6 +128,18 @@ def safe_float(val):
 st.divider()
 
 # --- 6. 호수 입력 및 데이터 조회 ---
+
+# 1. 여기에 스타일 코드를 삽입합니다.
+st.markdown("""
+    <style>
+    div[data-testid="stTextInput"] input {
+        height: 80px !important;
+        font-size: 30px !important;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 room_col, btn_col = st.columns([3, 1])
 
