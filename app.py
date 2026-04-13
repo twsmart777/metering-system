@@ -267,7 +267,7 @@ with st.form("inspection_form", clear_on_submit=True):
     in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"")
 
     st.divider()
-    submit = st.form_submit_button(f"🚀 {selected_building} 전송 후 이동", use_container_width=True)
+    submit = st.form_submit_button(f"🚀 전송 후 호수이동", use_container_width=True)
 
 # --- 8. 데이터 전송 로직 ---
 if submit:
