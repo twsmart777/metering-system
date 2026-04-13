@@ -66,13 +66,13 @@ except Exception as e:
     st.error(f"⚠️ 연결 오류 발생: {e}")
     st.stop()
 
-# --- 5. 화면 디자인 로직 (관리자 박스 복구 및 UI 확대 버전) ---
+# --- 5. 화면 디자인 로직 (로고 박스 출력 로직 완전 수정) ---
 
-# 1. 현장 접속인지 관리자 접속인지 판별 (가장 확실한 방법)
+# 1. 현재 접속이 유효한 현장 링크인지 체크 (True/False)
 is_site_access = url_building in BUILDING_LIST
 
-# 2. [수정] 관리자로 접속했을 때만 상단 '프라임시티' 로고 박스 표시
-if not is_site_access:
+# 2. 현장 접속이 아닐 때(관리자일 때)만 상단 프라임시티 박스 출력
+if is_site_access == False:
     st.markdown(f"""
         <div style='text-align: center; background-color: #1c2833; padding: 20px; border-radius: 10px; margin-bottom: 25px;'>
             <h1 style='color: #ecf0f1; margin: 0; font-size: 45px;'>{COMPANY_NAME}</h1>
@@ -83,20 +83,20 @@ if not is_site_access:
 # 3. 현장 표시 및 선택 영역
 if is_site_access:
     selected_building = url_building
-    # 현장 링크로 접속 시: 상단 로고 없이 현장명만 크게 표시
+    # 현장 링크 접속 시: 로고 없이 현장명만 크게
     st.markdown(f"""
         <div style='background-color: #d4edda; padding: 20px; border-radius: 10px; border: 3px solid #28a745; text-align: center; margin-bottom: 25px;'>
             <h2 style='color: #155724; margin: 0; font-size: 40px;'>🏢 {selected_building}</h2>
         </div>
     """, unsafe_allow_html=True)
 else:
-    # 관리자로 접속 시: 현장 선택창 표시
+    # 관리자 접속 시: 현장 선택 셀렉트박스 표시
     selected_building = st.selectbox("🏗️ 현장을 선택하세요", ["선택하세요"] + BUILDING_LIST)
     if selected_building == "선택하세요":
         st.info("현장을 선택해 주세요.")
         st.stop()
 
-# --- 이하 시트 연결 및 함수 (기존과 동일) ---
+# --- 시트 연결 및 유틸리티 함수 (여기서부터는 기존과 동일) ---
 try:
     sheet = spreadsheet.worksheet(selected_building)
 except gspread.exceptions.WorksheetNotFound:
