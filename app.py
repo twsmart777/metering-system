@@ -132,10 +132,16 @@ st.divider()
 # 1. 여기에 스타일 코드를 삽입합니다.
 st.markdown("""
     <style>
+    /* 1. 입력창 전체 컨테이너의 높이 조절 */
+    div[data-testid="stTextInput"] > div > div {
+        height: 70px !important;
+    }
+    
+    /* 2. 실제 input 태그의 높이와 텍스트 정렬 */
     div[data-testid="stTextInput"] input {
-        height: 50px !important;
-        font-size: 20px !important;
-        font-weight: bold;
+        height: 70px !important;
+        font-size: 30px !important;
+        line-height: 70px !important;
     }
     </style>
     """, unsafe_allow_html=True)
