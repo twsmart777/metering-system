@@ -216,7 +216,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_data'] = last_data
     
     if last_data is not None:
-        st.success(f"📊 {room}호 전월 데이터를 불러왔습니다.")
+        st.success(f"📊 {room}호 전월 데이터 로딩완료")
         st.markdown("""
             <style>
             .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
