@@ -108,7 +108,7 @@ try:
     sheet = spreadsheet.worksheet(selected_building)
 except gspread.exceptions.WorksheetNotFound:
     sheet = spreadsheet.add_worksheet(title=selected_building, rows="1000", cols="10")
-    sheet.append_row(["일시", "건물명", "호수", "전기", "수도", "난방", "온수", "냉방"])
+    sheet.append_row(["일시", "건물명", "호수", "전기", "수도", "온수", "난방", "냉방"])
 
 def get_last_reading(target_sheet, room_number):
     try:
