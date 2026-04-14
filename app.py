@@ -243,30 +243,33 @@ if load_btn or (room and st.session_state.get('last_room') != room):
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
     
-    # 현장명 가져오기 및 공백 제거
+    # 세션에서 데이터와 현장명 가져오기
+    current_last_data = st.session_state.get('last_data', None)
     current_site = st.session_state.get('site_name', "").strip()
     
-    # 전기/수도만 나오는 현장 리스트 (이름이 정확해야 합니다)
+    # 특정 현장 리스트
     limited_sites = ["더빌", "엘리트타워", "S타워"]
 
-    # 전월 데이터 불러오기
-    current_last_data = st.session_state.get('last_data', None)
-    prev_e = current_last_data.get('전기', 0) if current_last_data else 0
-    prev_w = current_last_data.get('수도', 0) if current_last_data else 0
+    # [수정] 데이터프레임 여부를 안전하게 체크하여 전월값 할당
+    # 데이터가 아예 없거나(None) 비어있는 경우(empty)를 모두 대비
+    has_data = current_last_data is not None and not (isinstance(current_last_data, pd.DataFrame) and current_last_data.empty)
+    
+    prev_e = current_last_data.get('전기', 0) if has_data else 0
+    prev_w = current_last_data.get('수도', 0) if has_data else 0
 
-    # 공통: 전기, 수도는 무조건 표시
+    # 1. 공통 항목 표시 (전기, 수도)
     st.markdown(f"⚡ **전기** (전월: {prev_e} kw)")
     in_e = st.text_input("전기", key="e_v", label_visibility="collapsed")
     
     st.markdown(f"💧 **수도** (전월: {prev_w} $m^3$)")
     in_w = st.text_input("수도", key="w_v", label_visibility="collapsed")
 
-    # 현장 판별 후 나머지 표시 여부 결정
+    # 2. 현장 판별 후 나머지 항목 표시
+    # "더빌, 엘리트타워, 에스타워"가 아닐 때만 입력창 생성
     if current_site not in limited_sites:
-        # 일반 현장: 온수, 난방, 냉방 표시
-        prev_h = current_last_data.get('온수', 0) if current_last_data else 0
-        prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data else 0.0
-        prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data else 0.0
+        prev_h = current_last_data.get('온수', 0) if has_data else 0
+        prev_n = safe_float(current_last_data.get('난방', 0.0)) if has_data else 0.0
+        prev_c = safe_float(current_last_data.get('냉방', 0.0)) if has_data else 0.0
 
         st.markdown(f"🔥 **온수** (전월: {prev_h} $m^3$)")
         in_h = st.text_input("온수", key="h_v", label_visibility="collapsed")
@@ -277,11 +280,12 @@ with st.form("inspection_form", clear_on_submit=True):
         st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f} m/wh)")
         in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed")
     else:
-        # 제한 현장: 내부적으로 0 처리
+        # 특정 현장은 입력창 대신 내부적으로 0 할당
         in_h, in_n, in_c = "0", "0", "0"
 
     st.divider()
-    submit = st.form_submit_button(f"🚀 전송. 호수이동", use_container_width=True)
+    # 3. 전송 버튼은 if문 밖(form 안의 최하단)에 두어 항상 나타나게 함
+    submit = st.form_submit_button("🚀 전송. 호수이동", use_container_width=True)
 
 # --- 8. 데이터 전송 로직 ---
 if submit:
