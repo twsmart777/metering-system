@@ -241,31 +241,34 @@ if load_btn or (room and st.session_state.get('last_room') != room):
 
 # --- 7. 검침 수치 입력 폼 ---
 with st.form("inspection_form", clear_on_submit=True):
+    # 세션에서 현장명을 가져와서 앞뒤 공백을 완전히 제거
+    current_site = str(st.session_state.get('site_name', "")).strip()
+    
+    # [확인용] 현장명이 리스트와 일치하는지 체크하기 위해 화면에 아주 작게 표시
+    st.caption(f"📍 현재 현장: [{current_site}]")
+    
     st.markdown("### ✍️ 당월 수치 입력")
     
-    # 세션에서 데이터와 현장명 가져오기
-    current_last_data = st.session_state.get('last_data', None)
-    current_site = st.session_state.get('site_name', "").strip()
-    
-    # 특정 현장 리스트
+    # 전기/수도만 나오는 현장 리스트 (에스타워를 S타워로 교체)
+    # 시트에 적힌 이름과 여기 적힌 이름이 '완벽히' 같아야 숨겨집니다.
     limited_sites = ["더빌", "엘리트타워", "S타워"]
 
-    # [수정] 데이터프레임 여부를 안전하게 체크하여 전월값 할당
-    # 데이터가 아예 없거나(None) 비어있는 경우(empty)를 모두 대비
+    # 데이터프레임 오류 방지를 위한 체크
+    current_last_data = st.session_state.get('last_data', None)
     has_data = current_last_data is not None and not (isinstance(current_last_data, pd.DataFrame) and current_last_data.empty)
     
     prev_e = current_last_data.get('전기', 0) if has_data else 0
     prev_w = current_last_data.get('수도', 0) if has_data else 0
 
-    # 1. 공통 항목 표시 (전기, 수도)
+    # 1. 공통 항목: 전기, 수도 (모든 현장 표시)
     st.markdown(f"⚡ **전기** (전월: {prev_e} kw)")
     in_e = st.text_input("전기", key="e_v", label_visibility="collapsed")
     
     st.markdown(f"💧 **수도** (전월: {prev_w} $m^3$)")
     in_w = st.text_input("수도", key="w_v", label_visibility="collapsed")
 
-    # 2. 현장 판별 후 나머지 항목 표시
-    # "더빌, 엘리트타워, 에스타워"가 아닐 때만 입력창 생성
+    # 2. 조건부 항목: 온수, 난방, 냉방
+    # 현재 현장이 limited_sites에 포함되지 않았을 때만 화면에 출력
     if current_site not in limited_sites:
         prev_h = current_last_data.get('온수', 0) if has_data else 0
         prev_n = safe_float(current_last_data.get('난방', 0.0)) if has_data else 0.0
@@ -280,11 +283,11 @@ with st.form("inspection_form", clear_on_submit=True):
         st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f} m/wh)")
         in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed")
     else:
-        # 특정 현장은 입력창 대신 내부적으로 0 할당
+        # S타워, 더빌, 엘리트타워는 입력창을 만들지 않고 값을 "0"으로 고정 전송
         in_h, in_n, in_c = "0", "0", "0"
 
     st.divider()
-    # 3. 전송 버튼은 if문 밖(form 안의 최하단)에 두어 항상 나타나게 함
+    # 폼 전송 버튼 (항상 폼의 마지막에 위치)
     submit = st.form_submit_button("🚀 전송. 호수이동", use_container_width=True)
 
 # --- 8. 데이터 전송 로직 ---
