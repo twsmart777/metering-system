@@ -254,7 +254,7 @@ with st.form("inspection_form", clear_on_submit=True):
     # 현장명 확인 (설정값에서 가져옴)
     target_site = st.session_state.get('site_name', "")
     # 전기/수도만 나오는 현장 리스트
-    limited_sites = ["더빌", "엘리트타워", "에스타워"]
+    limited_sites = ["더빌", "엘리트타워", "S타워"]
 
     # 1. 공통 항목: 전기
     st.markdown(f"⚡ **전기** (전월: {prev_e} kw)")
