@@ -263,10 +263,10 @@ with st.form("inspection_form", clear_on_submit=True):
     prev_w = current_last_data.get('수도', 0) if has_data else 0
 
     # 1. 공통 항목: 전기, 수도 (모든 현장 표시)
-    st.markdown(f"⚡ **전기** (전월: {prev_e} kw)")
+    st.markdown(f"⚡ **전기** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_e} kw)")
     in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder="")
     
-    st.markdown(f"💧 **수도** (전월: {prev_w} $m^3$)")
+    st.markdown(f"💧 **수도** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_w} $m^3$)")
     in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder="")
 
     # 2. 조건부 항목: 온수, 난방, 냉방
@@ -275,13 +275,13 @@ with st.form("inspection_form", clear_on_submit=True):
         prev_n = safe_float(current_last_data.get('난방', 0.0)) if has_data else 0.0
         prev_c = safe_float(current_last_data.get('냉방', 0.0)) if has_data else 0.0
 
-        st.markdown(f"🔥 **온수** (전월: {prev_h} $m^3$)")
+        st.markdown(f"🔥 **온수** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_h} $m^3$)")
         in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder="")
         
-        st.markdown(f"♨️ **난방** (전월: {prev_n:.3f} m/wh)")
+        st.markdown(f"♨️ **난방** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_n:.3f} m/wh)")
         in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder="")
         
-        st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f} m/wh)")
+        st.markdown(f"❄️ **냉방** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_c:.3f} m/wh)")
         in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder="")
     else:
         # S타워, 더빌, 엘리트타워는 화면에는 안 보이지만 값은 전송해야 함
