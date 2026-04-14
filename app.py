@@ -244,27 +244,39 @@ with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
     current_last_data = st.session_state.get('last_data', None)
     
+    # 전월 데이터 추출
     prev_e = current_last_data.get('전기', 0) if current_last_data is not None else 0
     prev_w = current_last_data.get('수도', 0) if current_last_data is not None else 0
     prev_h = current_last_data.get('온수', 0) if current_last_data is not None else 0
     prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
     prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
 
-# 컬럼 레이아웃을 제거하고 순차적으로 배치
+    # 현장명 확인 (설정값에서 가져옴)
+    target_site = st.session_state.get('site_name', "")
+    # 전기/수도만 나오는 현장 리스트
+    limited_sites = ["더빌", "엘리트타워", "에스타워"]
+
+    # 1. 공통 항목: 전기
     st.markdown(f"⚡ **전기** (전월: {prev_e} kw)")
-    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder=f"")
+    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder="")
     
+    # 2. 공통 항목: 수도
     st.markdown(f"💧 **수도** (전월: {prev_w} $m^3$)")
-    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder=f"")
-    
-    st.markdown(f"🔥 **온수** (전월: {prev_h} $m^3$)")
-    in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder=f"")
-    
-    st.markdown(f"♨️ **난방** (전월: {prev_n:.3f} m/wh)")
-    in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder=f"")
-    
-    st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f} m/wh)")
-    in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder=f"")
+    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder="")
+
+    # 3. 현장에 따른 나머지 항목 표시 여부
+    if target_site not in limited_sites:
+        st.markdown(f"🔥 **온수** (전월: {prev_h} $m^3$)")
+        in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder="")
+        
+        st.markdown(f"♨️ **난방** (전월: {prev_n:.3f} m/wh)")
+        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder="")
+        
+        st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f} m/wh)")
+        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder="")
+    else:
+        # 해당 현장들은 나머지 값을 0으로 자동 처리 (에러 방지용)
+        in_h, in_n, in_c = "0", "0", "0"
 
     st.divider()
     submit = st.form_submit_button(f"🚀 전송. 호수이동", use_container_width=True)
