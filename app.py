@@ -241,26 +241,23 @@ if load_btn or (room and st.session_state.get('last_room') != room):
 
 # --- 7. 검침 수치 입력 폼 ---
 with st.form("inspection_form", clear_on_submit=True):
-    # [핵심 수정] 세션 데이터가 아니라 실제 위에서 정의된 selected_building 변수를 사용합니다.
     current_site = str(selected_building).strip()
-    
-    # 특정 현장 리스트 (이 이름들이 포함되어 있는지 확인)
     limited_sites = ["더빌", "엘리트타워", "S타워"]
-
-    # 현재 현장이 제한 현장인지 판별 (이름이 정확히 같거나 포함된 경우)
     is_limited = any(site == current_site for site in limited_sites)
     
-    # [진단용] 작동 확인을 위해 아주 작게 표시 (나중에 삭제 가능)
     st.caption(f"📍 현재 현장: {current_site} / 필터링 적용: {'예' if is_limited else '아니오'}")
-    
     st.markdown("### ✍️ 당월 수치 입력")
     
-    # 데이터프레임 오류 방지를 위한 체크
+    # [중요] 데이터프레임 체크 및 전월 데이터 로딩을 최상단으로 이동
     current_last_data = st.session_state.get('last_data', None)
     has_data = current_last_data is not None and not (isinstance(current_last_data, pd.DataFrame) and current_last_data.empty)
     
+    # 현장 종류와 상관없이 모든 전월 데이터를 여기서 미리 정의 (NameError 방지)
     prev_e = current_last_data.get('전기', 0) if has_data else 0
     prev_w = current_last_data.get('수도', 0) if has_data else 0
+    prev_h = current_last_data.get('온수', 0) if has_data else 0
+    prev_n = safe_float(current_last_data.get('난방', 0.0)) if has_data else 0.0
+    prev_c = safe_float(current_last_data.get('냉방', 0.0)) if has_data else 0.0
 
     # 1. 공통 항목: 전기, 수도 (모든 현장 표시)
     st.markdown(f"⚡ **전기** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_e} kw)", unsafe_allow_html=True)
@@ -271,10 +268,7 @@ with st.form("inspection_form", clear_on_submit=True):
 
     # 2. 조건부 항목: 온수, 난방, 냉방
     if not is_limited:
-        prev_h = current_last_data.get('온수', 0) if has_data else 0
-        prev_n = safe_float(current_last_data.get('난방', 0.0)) if has_data else 0.0
-        prev_c = safe_float(current_last_data.get('냉방', 0.0)) if has_data else 0.0
-
+        # 일반 현장: 입력창 표시
         st.markdown(f"🔥 **온수** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_h} $m^3$)", unsafe_allow_html=True)
         in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder="")
         
@@ -284,13 +278,13 @@ with st.form("inspection_form", clear_on_submit=True):
         st.markdown(f"❄️ **냉방** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_c:.3f} MWh)", unsafe_allow_html=True)
         in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder="")
     else:
-        # S타워, 더빌, 엘리트타워는 화면에는 안 보이지만 값은 전송해야 함
-        # 이전 값을 유지하거나 0으로 세팅 (여기서는 0으로 세팅)
+        # S타워 등 제한 현장: 입력창은 숨기고 위에서 정의한 prev 값을 계승
         in_h = str(prev_h)
         in_n = str(prev_n)
         in_c = str(prev_c)
 
     st.divider()
+    # 폼 버튼이 조건문 밖에 있는지 확인
     submit = st.form_submit_button("🚀 전송. 호수이동", use_container_width=True)
 
 # --- 8. 데이터 전송 로직 ---
