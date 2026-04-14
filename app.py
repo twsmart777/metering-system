@@ -286,7 +286,9 @@ with st.form("inspection_form", clear_on_submit=True):
     else:
         # S타워, 더빌, 엘리트타워는 화면에는 안 보이지만 값은 전송해야 함
         # 이전 값을 유지하거나 0으로 세팅 (여기서는 0으로 세팅)
-        in_h, in_n, in_c = "0", "0", "0"
+        in_h = str(prev_h)
+        in_n = str(prev_n)
+        in_c = str(prev_c)
 
     st.divider()
     submit = st.form_submit_button("🚀 전송. 호수이동", use_container_width=True)
