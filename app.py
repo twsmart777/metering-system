@@ -242,40 +242,42 @@ if load_btn or (room and st.session_state.get('last_room') != room):
 # --- 7. 검침 수치 입력 폼 ---
 with st.form("inspection_form", clear_on_submit=True):
     st.markdown("### ✍️ 당월 수치 입력")
+    
+    # 현장명 가져오기 및 공백 제거
+    current_site = st.session_state.get('site_name', "").strip()
+    
+    # 전기/수도만 나오는 현장 리스트 (이름이 정확해야 합니다)
+    limited_sites = ["더빌", "엘리트타워", "에스타워"]
+
+    # 전월 데이터 불러오기
     current_last_data = st.session_state.get('last_data', None)
-    
-    # 전월 데이터 추출
-    prev_e = current_last_data.get('전기', 0) if current_last_data is not None else 0
-    prev_w = current_last_data.get('수도', 0) if current_last_data is not None else 0
-    prev_h = current_last_data.get('온수', 0) if current_last_data is not None else 0
-    prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data is not None else 0.0
-    prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data is not None else 0.0
+    prev_e = current_last_data.get('전기', 0) if current_last_data else 0
+    prev_w = current_last_data.get('수도', 0) if current_last_data else 0
 
-    # 현장명 확인 (설정값에서 가져옴)
-    target_site = st.session_state.get('site_name', "")
-    # 전기/수도만 나오는 현장 리스트
-    limited_sites = ["더빌", "엘리트타워", "S타워"]
-
-    # 1. 공통 항목: 전기
+    # 공통: 전기, 수도는 무조건 표시
     st.markdown(f"⚡ **전기** (전월: {prev_e} kw)")
-    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder="")
+    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed")
     
-    # 2. 공통 항목: 수도
     st.markdown(f"💧 **수도** (전월: {prev_w} $m^3$)")
-    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder="")
+    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed")
 
-    # 3. 현장에 따른 나머지 항목 표시 여부
-    if target_site not in limited_sites:
+    # 현장 판별 후 나머지 표시 여부 결정
+    if current_site not in limited_sites:
+        # 일반 현장: 온수, 난방, 냉방 표시
+        prev_h = current_last_data.get('온수', 0) if current_last_data else 0
+        prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data else 0.0
+        prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data else 0.0
+
         st.markdown(f"🔥 **온수** (전월: {prev_h} $m^3$)")
-        in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder="")
+        in_h = st.text_input("온수", key="h_v", label_visibility="collapsed")
         
         st.markdown(f"♨️ **난방** (전월: {prev_n:.3f} m/wh)")
-        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder="")
+        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed")
         
         st.markdown(f"❄️ **냉방** (전월: {prev_c:.3f} m/wh)")
-        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder="")
+        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed")
     else:
-        # 해당 현장들은 나머지 값을 0으로 자동 처리 (에러 방지용)
+        # 제한 현장: 내부적으로 0 처리
         in_h, in_n, in_c = "0", "0", "0"
 
     st.divider()
