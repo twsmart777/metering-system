@@ -247,7 +247,7 @@ with st.form("inspection_form", clear_on_submit=True):
     current_site = st.session_state.get('site_name', "").strip()
     
     # 전기/수도만 나오는 현장 리스트 (이름이 정확해야 합니다)
-    limited_sites = ["더빌", "엘리트타워", "에스타워"]
+    limited_sites = ["더빌", "엘리트타워", "S타워"]
 
     # 전월 데이터 불러오기
     current_last_data = st.session_state.get('last_data', None)
