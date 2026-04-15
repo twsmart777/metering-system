@@ -4,26 +4,43 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, timedelta, timezone
 import pandas as pd
 import os
-# --- 알림 팝업 함수 ---
+# --- [수정] 사파리 호환 팝업창 및 알림음 함수 ---
 @st.dialog("⚠️ 검침 수치 확인")
 def show_error_dialog(messages):
-    # 1. 시각적 메시지
-    st.error("입력한 수치가 전월보다 작습니다.")
+    st.error("수치가 전월보다 작습니다.")
     for msg in messages:
         st.write(f"📍 **{msg}**")
     
-    # 2. 알림음 재생 (브라우저 표준 비프음 효과)
-    # 사용자가 페이지를 한 번이라도 클릭한 상태라면 소리가 납니다.
+    # 사파리 대응을 위한 개선된 비프음 스크립트
     st.components.v1.html(
         """
         <script>
-        var context = new (window.AudioContext || window.webkitAudioContext)();
-        var oscillator = context.createOscillator();
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(440, context.currentTime); // 주파수(높낮이)
-        oscillator.connect(context.destination);
-        oscillator.start();
-        oscillator.stop(context.currentTime + 0.2); // 0.2초 동안 재생
+        function playSound() {
+            var AudioContext = window.AudioContext || window.webkitAudioContext;
+            var context = new AudioContext();
+            
+            // 사파리에서 오디오 컨텍스트가 잠겨있을 때 깨우는 로직
+            if (context.state === 'suspended') {
+                context.resume();
+            }
+
+            var oscillator = context.createOscillator();
+            var gainNode = context.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, context.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.1, context.currentTime); // 볼륨 조절
+            gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.2);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            oscillator.start();
+            oscillator.stop(context.currentTime + 0.2);
+        }
+        // 즉시 실행
+        playSound();
         </script>
         """,
         height=0,
