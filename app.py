@@ -303,9 +303,9 @@ if submit:
 
         # 2. [검증] 전월 대비 수치 검사 (역전 방지)
         error_msg = []
-        if res_e < prev_e: error_msg.append(f"⚡전기({res_e} < {prev_e})")
-        if res_w < prev_w: error_msg.append(f"💧수도({res_w} < {prev_w})")
-        if res_h < prev_h: error_msg.append(f"🔥온수({res_h} < {prev_h})")
+        if res_e < prev_e: error_msg.append(f"⚡전기({int(res_e)} < {int(prev_e)})")
+        if res_w < prev_w: error_msg.append(f"💧수도({int(res_w)} < {int(prev_w)})")
+        if res_h < prev_h: error_msg.append(f"🔥온수({int(res_h)} < {int(prev_h)})")
         if res_n < prev_n: error_msg.append(f"♨️난방({res_n:.3f} < {prev_n:.3f})")
         if res_c < prev_c: error_msg.append(f"❄️냉방({res_c:.3f} < {prev_c:.3f})")
 
@@ -322,7 +322,7 @@ if submit:
 
                 kst = timezone(timedelta(hours=9))
                 now = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')
-                row = [now, selected_building, room, round(res_e, 0), round(res_w, 0), round(res_n, 3), round(res_h, 0), round(res_c, 3)]
+                row = [now, selected_building, room, round(res_e, 0), round(res_w, 0), round(res_h, 0), round(res_n, 3), round(res_c, 3)]
 
                 if room in all_rooms_ordered:
                     row_idx = all_rooms_ordered.index(room) + 2
