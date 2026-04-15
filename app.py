@@ -26,12 +26,13 @@ st.set_page_config(page_title=f"{COMPANY_NAME} 통합검침", layout="centered")
 url_params = st.query_params
 url_building = url_params.get("b", None)
 
-# --- 3. 보안 인증 로직 (최우선 실행) ---
+# --- 3. 보안 인증 로직 ---
 if 'authenticated' not in st.session_state:
-    st.session_state['authenticated'] = True
+    # [임시 수정] 배포 전까지 무조건 True로 설정하여 인증 패스
+    st.session_state['authenticated'] = True 
 
+# 아래는 기존 인증 로직입니다. (현재는 실행되지 않도록 설정됨)
 if not st.session_state['authenticated']:
-    # 현장 링크인지 메인 주소인지 판별하여 비번 설정
     if url_building in BUILDING_LIST:
         target_pwd = SITE_PASSWORD
         header_msg = f"🔒 {url_building} 현장 인증"
@@ -40,15 +41,16 @@ if not st.session_state['authenticated']:
         header_msg = f"🔒 {COMPANY_NAME} 관리자 인증"
 
     st.markdown(f"### {header_msg}")
+    # key값은 유니크해야 하므로 유지합니다.
     input_pwd = st.text_input("비밀번호를 입력하세요", type="password", key="auth_pwd")
-    
+
     if st.button("접속하기"):
         if input_pwd == target_pwd:
             st.session_state['authenticated'] = True
             st.rerun()
         else:
             st.error("❌ 비밀번호가 일치하지 않습니다.")
-    st.stop()
+    st.stop() # 인증되지 않았을 때만 여기서 실행 중단
 
 # --- 4. 구글 시트 연결 ---
 @st.cache_resource
