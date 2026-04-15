@@ -294,16 +294,31 @@ if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
     else:
+        # 1. 입력값 수치화 (입력하지 않았으면 전월값으로 대체)
+        res_e = safe_float(in_e) if in_e else safe_float(prev_e)
+        res_w = safe_float(in_w) if in_w else safe_float(prev_w)
+        res_h = safe_float(in_h) if in_h else safe_float(prev_h)
+        res_n = safe_float(in_n) if in_n else safe_float(prev_n)
+        res_c = safe_float(in_c) if in_c else safe_float(prev_c)
+
+        # 2. [검증] 전월 대비 수치 검사 (역전 방지)
+        error_msg = []
+        if res_e < prev_e: error_msg.append(f"⚡전기({res_e} < {prev_e})")
+        if res_w < prev_w: error_msg.append(f"💧수도({res_w} < {prev_w})")
+        if res_h < prev_h: error_msg.append(f"🔥온수({res_h} < {prev_h})")
+        if res_n < prev_n: error_msg.append(f"♨️난방({res_n:.3f} < {prev_n:.3f})")
+        if res_c < prev_c: error_msg.append(f"❄️냉방({res_c:.3f} < {prev_c:.3f})")
+
+        if error_msg:
+            st.error(f"⚠️ 입력 수치가 전월보다 작습니다: {', '.join(error_msg)}")
+            st.warning("수치를 다시 확인하고 수정해 주세요.")
+            st.stop()  # 시트 저장 차단
+
+        # 3. 데이터 저장 프로세스 시작
         try:
             with st.spinner("데이터 처리 중..."):
                 all_rows = sheet.get_all_values()
                 all_rooms_ordered = [r[2] for r in all_rows if len(r) > 2][1:] # 헤더 제외 순서 유지
-                
-                res_e = safe_float(in_e) if in_e else safe_float(prev_e)
-                res_w = safe_float(in_w) if in_w else safe_float(prev_w)
-                res_h = safe_float(in_h) if in_h else safe_float(prev_h)
-                res_n = safe_float(in_n) if in_n else safe_float(prev_n)
-                res_c = safe_float(in_c) if in_c else safe_float(prev_c)
 
                 kst = timezone(timedelta(hours=9))
                 now = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')
@@ -328,7 +343,7 @@ if submit:
                 if 'last_room' in st.session_state: del st.session_state['last_room']
                 if 'last_data' in st.session_state: del st.session_state['last_data']
                 
-                st.rerun()
+                st.rerun() # 완료 후 새로고침
                     
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
