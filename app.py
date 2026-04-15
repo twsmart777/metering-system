@@ -4,49 +4,57 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, timedelta, timezone
 import pandas as pd
 import os
-# --- [수정] 사파리 호환 팝업창 및 알림음 함수 ---
-@st.dialog("⚠️ 검침 수치 확인")
+# --- [최종] 소리 + 빨간 깜빡이 통합 경고 팝업 ---
+@st.dialog("⚠️ 수치 오류")
 def show_error_dialog(messages):
-    st.error("수치가 전월보다 작습니다.")
-    for msg in messages:
-        st.write(f"📍 **{msg}**")
-    
-    # 사파리 대응을 위한 개선된 비프음 스크립트
+    # 1. 시각적 효과 (빨간 깜빡이) & 청각적 효과 (비프음) 통합 자바스크립트
     st.components.v1.html(
         """
+        <div id="flash"></div>
         <script>
-        function playSound() {
-            var AudioContext = window.AudioContext || window.webkitAudioContext;
-            var context = new AudioContext();
-            
-            // 사파리에서 오디오 컨텍스트가 잠겨있을 때 깨우는 로직
-            if (context.state === 'suspended') {
-                context.resume();
+            // [1] 비프음 재생 함수
+            function playSound() {
+                try {
+                    var AudioContext = window.AudioContext || window.webkitAudioContext;
+                    var context = new AudioContext();
+                    var oscillator = context.createOscillator();
+                    var gainNode = context.createGain();
+
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, context.currentTime); 
+                    gainNode.gain.setValueAtTime(0.1, context.currentTime);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(context.destination);
+
+                    oscillator.start();
+                    oscillator.stop(context.currentTime + 0.2);
+                } catch (e) {
+                    console.log("Audio play failed:", e);
+                }
             }
-
-            var oscillator = context.createOscillator();
-            var gainNode = context.createGain();
-
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(440, context.currentTime);
             
-            gainNode.gain.setValueAtTime(0.1, context.currentTime); // 볼륨 조절
-            gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.2);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(context.destination);
-
-            oscillator.start();
-            oscillator.stop(context.currentTime + 0.2);
-        }
-        // 즉시 실행
-        playSound();
+            // 실행
+            playSound();
         </script>
-        """,
-        height=0,
+        <style>
+            @keyframes blink { 0% { opacity: 0; } 50% { opacity: 0.6; } 100% { opacity: 0; } }
+            #flash { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+                     background: red; z-index: 9999; pointer-events: none; 
+                     animation: blink 0.3s ease-in-out 3; }
+        </style>
+        """, height=0,
     )
 
-    if st.button("확인", use_container_width=True):
+    # 2. 핵심 정보만 크게 표시 (최소한의 글자)
+    st.error("### 📢 전월보다 낮음!")
+    
+    for msg in messages:
+        st.markdown(f"## ❌ {msg}")
+    
+    st.divider()
+    
+    if st.button("🔴 확인 (수정하기)", use_container_width=True):
         st.rerun()
 
 # --- 1. 설정 및 비밀번호 관리 ---
