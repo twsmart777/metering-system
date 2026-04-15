@@ -4,6 +4,33 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, timedelta, timezone
 import pandas as pd
 import os
+# --- 알림 팝업 함수 ---
+@st.dialog("⚠️ 검침 수치 확인")
+def show_error_dialog(messages):
+    # 1. 시각적 메시지
+    st.error("입력한 수치가 전월보다 작습니다.")
+    for msg in messages:
+        st.write(f"📍 **{msg}**")
+    
+    # 2. 알림음 재생 (브라우저 표준 비프음 효과)
+    # 사용자가 페이지를 한 번이라도 클릭한 상태라면 소리가 납니다.
+    st.components.v1.html(
+        """
+        <script>
+        var context = new (window.AudioContext || window.webkitAudioContext)();
+        var oscillator = context.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, context.currentTime); // 주파수(높낮이)
+        oscillator.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + 0.2); // 0.2초 동안 재생
+        </script>
+        """,
+        height=0,
+    )
+
+    if st.button("확인", use_container_width=True):
+        st.rerun()
 
 # --- 1. 설정 및 비밀번호 관리 ---
 COMPANY_NAME = "프라임시티"
@@ -301,18 +328,18 @@ if submit:
         res_n = safe_float(in_n) if in_n else safe_float(prev_n)
         res_c = safe_float(in_c) if in_c else safe_float(prev_c)
 
-        # 2. [검증] 전월 대비 수치 검사 (역전 방지)
+        # 2. [검증] 전월 대비 수치 검사
         error_msg = []
-        if res_e < prev_e: error_msg.append(f"⚡전기({int(res_e)} < {int(prev_e)})")
-        if res_w < prev_w: error_msg.append(f"💧수도({int(res_w)} < {int(prev_w)})")
-        if res_h < prev_h: error_msg.append(f"🔥온수({int(res_h)} < {int(prev_h)})")
-        if res_n < prev_n: error_msg.append(f"♨️난방({res_n:.3f} < {prev_n:.3f})")
-        if res_c < prev_c: error_msg.append(f"❄️냉방({res_c:.3f} < {prev_c:.3f})")
+        if res_e < prev_e: error_msg.append(f"전기({int(res_e)} < {int(prev_e)})")
+        if res_w < prev_w: error_msg.append(f"수도({int(res_w)} < {int(prev_w)})")
+        if res_h < prev_h: error_msg.append(f"온수({int(res_h)} < {int(prev_h)})")
+        if res_n < prev_n: error_msg.append(f"난방({res_n:.3f} < {prev_n:.3f})")
+        if res_c < prev_c: error_msg.append(f"냉방({res_c:.3f} < {prev_c:.3f})")
 
         if error_msg:
-            st.error(f"⚠️ 입력 수치가 전월보다 작습니다: {', '.join(error_msg)}")
-            st.warning("수치를 다시 확인하고 수정해 주세요.")
-            st.stop()  # 시트 저장 차단
+            # 팝업창 띄우기 (알림음 포함)
+            show_error_dialog(error_msg)
+            st.stop()
 
         # 3. 데이터 저장 프로세스 시작
         try:
