@@ -299,7 +299,7 @@ with st.form("inspection_form", clear_on_submit=True):
     is_limited = any(site == current_site for site in limited_sites)
     
     st.caption(f"📍 현재 현장: {current_site} / 필터링 적용: {'예' if is_limited else '아니오'}")
-    st.markdown("### ✍️ "{room}호" 당월 수치 입력")
+    st.markdown("### ✍️ {room}호 당월 수치 입력")
     
     # [중요] 데이터프레임 체크 및 전월 데이터 로딩을 최상단으로 이동
     current_last_data = st.session_state.get('last_data', None)
