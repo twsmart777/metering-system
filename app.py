@@ -30,7 +30,6 @@ url_building = url_params.get("b", None)
 if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = True
 
-"""
 if not st.session_state['authenticated']:
     # 현장 링크인지 메인 주소인지 판별하여 비번 설정
     if url_building in BUILDING_LIST:
@@ -50,7 +49,6 @@ if not st.session_state['authenticated']:
         else:
             st.error("❌ 비밀번호가 일치하지 않습니다.")
     st.stop()
-"""
 
 # --- 4. 구글 시트 연결 ---
 @st.cache_resource
