@@ -129,14 +129,6 @@ if client:
         # 1. 현장 정보 기준 시트 (고정)
         info_sheet = spr.worksheet("현장정보")
         
-        # 2. 현장별 검침 시트 (선택된 현장명과 동일한 탭 연결)
-        # selected_building 값에 따라 실시간으로 시트가 결정됩니다.
-        try:
-            sheet = spr.worksheet(selected_building)
-        except:
-            st.warning(f"⚠️ '{selected_building}' 이름의 시트 탭을 찾을 수 없습니다.")
-            sheet = None
-
     except Exception as e:
         st.error(f"⚠️ 시트 열기 실패: {e}")
         st.stop()
@@ -172,14 +164,13 @@ else:
         st.stop()
 
 # =========================================================
-# 📝 [교체 로직] 현장정보 시트 연결 및 18개 컬럼 대응
+# 📝 [교체 로직] spr 변수 적용 및 현장별 시트/호수 로드 (최종본)
 try:
-    # 1. 현장별 검침기록 시트 연결 (없으면 생성)
-    sheet = spreadsheet.worksheet(selected_building)
+    # 1. 현장별 검침기록 시트 연결 (4번에서 정의한 spr 사용)
+    sheet = spr.worksheet(selected_building)
 except gspread.exceptions.WorksheetNotFound:
-    # 18개 컬럼 관리를 위해 cols를 20으로 여유있게 생성
-    sheet = spreadsheet.add_worksheet(title=selected_building, rows="1000", cols="20")
-    # 헤더를 전/당/사 3종 세트(총 18개)로 자동 생성
+    # 18개 컬럼 관리를 위해 신규 생성
+    sheet = spr.add_worksheet(title=selected_building, rows="1000", cols="20")
     header = ["일시", "현장명", "호수", 
               "전기-전월", "전기-당월", "전기사용량", 
               "수도-전월", "수도-당월", "수도사용량", 
@@ -190,10 +181,7 @@ except gspread.exceptions.WorksheetNotFound:
 
 # 2. [현장정보] 시트에서 호수 명단 불러오기
 try:
-    info_sheet = spreadsheet.worksheet("현장정보")
     info_data = info_sheet.get_all_records()
-    
-    # 해당 현장 호수만 필터링 및 숫자순 정렬
     room_list = [str(row['호수']).strip() for row in info_data if str(row['현장명']).strip() == selected_building]
     all_rooms = sorted(room_list, key=lambda x: int(''.join(filter(str.isdigit, x))) if any(c.isdigit() for c in x) else x)
     st.session_state['all_rooms'] = all_rooms
@@ -201,12 +189,13 @@ except Exception as e:
     st.error(f"⚠️ '현장정보' 시트를 읽어올 수 없습니다: {e}")
     all_rooms = []
 
-# 3. 전월 지침 조회 함수 (기존 로직 유지)
+# 3. 전월 지침 조회 함수 (누적 시트의 마지막 행 추출)
 def get_last_reading(target_sheet, room_number):
     try:
         data = target_sheet.get_all_records()
         if not data: return None
         df = pd.DataFrame(data)
+        # 해당 호수의 데이터 중 가장 아래(최신) 행을 반환
         filtered_df = df[df['호수'].astype(str) == str(room_number)]
         return filtered_df.iloc[-1] if not filtered_df.empty else None
     except: return None
