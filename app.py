@@ -246,45 +246,34 @@ st.divider()
 st.markdown("""
 <style>
 
-/* ✅ 전체 폭 제한 제거 */
+/* 1. 상단 */
 .block-container { 
     padding-top: 1rem !important; 
-    max-width: 100% !important;
-    margin: auto;
+    max-width: 100% !important; 
+    margin: auto; 
 }
 
-/* ✅ 가로 유지 */
+/* 2. 가로 유지 */
 [data-testid="stHorizontalBlock"] {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 8px !important;
+    gap: 10px !important;
     width: 100% !important;
 }
 
-/* ================================= */
-/* 🔥 핵심: 입력+버튼 줄만 안정화 */
-/* ================================= */
-
-/* 👉 모든 column 기본 안정화 */
+/* 🔥 핵심 1 */
 [data-testid="column"] {
     min-width: 0 !important;
 }
 
-/* 👉 버튼 컬럼 (오른쪽) 고정 */
-[data-testid="column"]:has(div.stButton) {
-    flex: 0 0 95px !important;
-    max-width: 95px !important;
+/* 🔥 핵심 2 */
+[data-testid="column"]:has(button) {
+    flex: 0 0 90px !important;
+    max-width: 90px !important;
 }
 
-/* 👉 입력창 컬럼 (왼쪽) 자동 확장 */
-[data-testid="column"]:has(div[data-testid="stTextInput"]) {
-    flex: 1 1 auto !important;
-}
-
-/* ================================= */
-/* 스타일 유지 (건드리지 않음) */
-/* ================================= */
+/* --- 기존 스타일 유지 --- */
 
 [data-testid="stTextInput"] > div {
     height: 75px !important;
@@ -312,30 +301,6 @@ div.stButton > button {
     border-radius: 12px !important;
     border: none !important;
     white-space: nowrap !important;
-}
-
-/* 텍스트 유지 */
-[data-testid="stMarkdownContainer"] p { 
-    font-size: 24px !important; 
-    font-weight: bold !important; 
-    margin-bottom: 5px !important; 
-}
-
-.loading-bar { 
-    background-color: #d4edda; 
-    color: #155724; 
-    padding: 10px; 
-    border-radius: 5px; 
-    font-weight: bold; 
-    margin-bottom: 10px; 
-    font-size: 18px; 
-}
-
-/* ✅ 모바일에서도 가로 유지 */
-@media (max-width: 768px) {
-    [data-testid="stHorizontalBlock"] {
-        flex-direction: row !important;
-    }
 }
 
 </style>
