@@ -186,7 +186,7 @@ except gspread.exceptions.WorksheetNotFound:
 try:
     info_data = info_sheet.get_all_records()
     room_list = [str(row['호수']).strip() for row in info_data if str(row['현장명']).strip() == selected_building]
-    all_rooms = sorted(room_list, key=lambda x: int(''.join(filter(str.isdigit, x))) if any(c.isdigit() for c in x) else x)
+    all_rooms = room_list
     st.session_state['all_rooms'] = all_rooms
 except Exception as e:
     st.error(f"⚠️ '현장정보' 시트를 읽어올 수 없습니다: {e}")
