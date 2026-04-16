@@ -257,10 +257,6 @@ st.markdown("""
         width: 100% !important;
     }
 
-    /* 2. 입력창(60%) : 버튼(40%) 강제 배분 */
-    [data-testid="column"]:nth-of-type(1) { flex: 6 !important; max-width: 60% !important; }
-    [data-testid="column"]:nth-of-type(2) { flex: 4 !important; max-width: 40% !important; }
-
     /* 3. 입력창 설정 (배경색 f0f2f6 유지, 글자 32px, 자간 확대) */
     [data-testid="stTextInput"] > div {
         height: 75px !important;
@@ -297,7 +293,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
-room_col, btn_col = st.columns([6, 4]) # 6:4 비율 적용
+room_col, btn_col = st.columns([7, 3]) # 6:4 비율 적용
 
 # [기존 기능 유지] 다음 호수 자동 반영 로직
 if 'next_room' in st.session_state:
@@ -400,7 +396,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        col_in, col_btn = st.columns([6, 4])
+        col_in, col_btn = st.columns([8, 2])
         with col_in:
             if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
             elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
