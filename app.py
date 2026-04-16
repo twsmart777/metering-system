@@ -296,20 +296,22 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown(f"### 🔢 {selected_building} 호수 입력")
-room_col, btn_col = st.columns([6, 4]) # 6:4 비율 적용
+st.markdown(f"### 🔢 {selected_building} 호수입력")
+room_col, btn_col = st.columns([3, 1]) # 6:4 비율 적용
 
-# [기존 기능 유지] 다음 호수 자동 반영 로직
+# [교정] 다음 호수 반영 로직을 최상단으로 올리고 last_room도 같이 맞춰줍니다.
 if 'next_room' in st.session_state:
     st.session_state['room_input'] = st.session_state.next_room
+    st.session_state['last_room'] = st.session_state.next_room # 자동 조회를 위해 추가
     del st.session_state['next_room']
 
+# [교정] room_input이 없을 때만 빈 값을 넣도록 수정 (덮어쓰기 방지)
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
 with room_col:
     # 3비율: 호수 입력창
-    room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
+    room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수입력", label_visibility="collapsed")
 
 with btn_col:
     # 1비율: 조회 버튼 (우측 배치)
@@ -397,7 +399,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        col_in, col_btn = st.columns([6, 4])
+        col_in, col_btn = st.columns([3, 1])
         with col_in:
             if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
             elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
@@ -507,12 +509,13 @@ if submit:
                         st.session_state.next_room = rooms_list[current_idx + 1]
                     else:
                         st.balloons()
-                        st.success(f"🎉 {selected_building} 현장 완료!")
                         st.session_state.next_room = rooms_list[0]
 
-                for key in ['in_e', 'in_w', 'in_h', 'in_n', 'in_c', 'last_room', 'last_data']:
+                # [교정] 입력창 위젯 초기화 (del 대신 값을 비워주는 방식이 더 안전함)
+                # 'e_v', 'w_v' 등 위젯의 key값도 같이 초기화해야 수치가 안 남습니다.
+                for key in ['e_v', 'w_v', 'h_v', 'n_v', 'c_v', 'last_data']:
                     if key in st.session_state:
-                        del st.session_state[key]
+                        st.session_state[key] = "" 
                 
                 st.rerun()
 # =========================================================
