@@ -244,52 +244,101 @@ st.divider()
 
 # --- 6. 호수 입력 및 데이터 조회 (최종 통합 스타일) ---
 st.markdown("""
-    <style>
-    /* 1. 상단 간격 축소 및 가로 배치 강제 (6:4 비율 고정) */
-    .block-container { padding-top: 1rem !important; max-width: 600px !important; margin: auto; }
-    
+<style>
+
+/* ✅ 전체 폭 제한 제거 */
+.block-container { 
+    padding-top: 1rem !important; 
+    max-width: 100% !important;
+    margin: auto;
+}
+
+/* ✅ 가로 유지 */
+[data-testid="stHorizontalBlock"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+/* ================================= */
+/* 🔥 핵심: 입력+버튼 줄만 안정화 */
+/* ================================= */
+
+/* 👉 모든 column 기본 안정화 */
+[data-testid="column"] {
+    min-width: 0 !important;
+}
+
+/* 👉 버튼 컬럼 (오른쪽) 고정 */
+[data-testid="column"]:has(div.stButton) {
+    flex: 0 0 95px !important;
+    max-width: 95px !important;
+}
+
+/* 👉 입력창 컬럼 (왼쪽) 자동 확장 */
+[data-testid="column"]:has(div[data-testid="stTextInput"]) {
+    flex: 1 1 auto !important;
+}
+
+/* ================================= */
+/* 스타일 유지 (건드리지 않음) */
+/* ================================= */
+
+[data-testid="stTextInput"] > div {
+    height: 75px !important;
+    background-color: #f0f2f6 !important;
+}
+
+[data-testid="stTextInput"] input {
+    height: 75px !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    letter-spacing: 4px !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    padding-left: 15px !important;
+    width: 100% !important;
+}
+
+div.stButton > button {
+    height: 75px !important;
+    width: 100% !important;
+    font-size: 22px !important;
+    font-weight: bold !important;
+    background-color: #FFD700 !important;
+    color: #000000 !important;
+    border-radius: 12px !important;
+    border: none !important;
+    white-space: nowrap !important;
+}
+
+/* 텍스트 유지 */
+[data-testid="stMarkdownContainer"] p { 
+    font-size: 24px !important; 
+    font-weight: bold !important; 
+    margin-bottom: 5px !important; 
+}
+
+.loading-bar { 
+    background-color: #d4edda; 
+    color: #155724; 
+    padding: 10px; 
+    border-radius: 5px; 
+    font-weight: bold; 
+    margin-bottom: 10px; 
+    font-size: 18px; 
+}
+
+/* ✅ 모바일에서도 가로 유지 */
+@media (max-width: 768px) {
     [data-testid="stHorizontalBlock"] {
-        display: flex !important;
         flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 10px !important;
-        width: 100% !important;
     }
+}
 
-    /* 3. 입력창 설정 (배경색 f0f2f6 유지, 글자 32px, 자간 확대) */
-    [data-testid="stTextInput"] > div {
-        height: 75px !important;
-        background-color: #f0f2f6 !important;
-    }
-
-    [data-testid="stTextInput"] input {
-        height: 75px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        letter-spacing: 4px !important; /* 숫자 사이 간격 */
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        padding-left: 15px !important;
-    }
-
-    /* 4. 모든 버튼 스타일 (노란색 FD700 유지) */
-    div.stButton > button {
-        height: 75px !important;
-        width: 100% !important;
-        font-size: 22px !important;
-        font-weight: bold !important;
-        background-color: #FFD700 !important;
-        color: #000000 !important;
-        border-radius: 12px !important;
-        border: none !important;
-        white-space: nowrap !important;
-    }
-    
-    /* 5. 텍스트 및 로딩바 */
-    [data-testid="stMarkdownContainer"] p { font-size: 24px !important; font-weight: bold !important; margin-bottom: 5px !important; }
-    .loading-bar { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; font-weight: bold; margin-bottom: 10px; font-size: 18px; }
-    </style>
+</style>
 """, unsafe_allow_html=True)
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
