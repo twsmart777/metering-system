@@ -411,14 +411,14 @@ if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
     else:
-        # 1. 입력값 수치화 (입력하지 않았으면 전월값으로 대체)
+        # 8-1. 입력값 수치화 (입력하지 않았으면 전월값으로 대체)
         res_e = safe_float(in_e) if in_e else safe_float(prev_e)
         res_w = safe_float(in_w) if in_w else safe_float(prev_w)
         res_h = safe_float(in_h) if in_h else safe_float(prev_h)
         res_n = safe_float(in_n) if in_n else safe_float(prev_n)
         res_c = safe_float(in_c) if in_c else safe_float(prev_c)
 
-        # 2. [검증] 전월 대비 수치 검사
+        # 8-2. [검증] 전월 대비 수치 검사
         error_msg = []
         if res_e < prev_e: error_msg.append(f"전기({int(res_e)} < {int(prev_e)})")
         if res_w < prev_w: error_msg.append(f"수도({int(res_w)} < {int(prev_w)})")
@@ -433,22 +433,28 @@ if submit:
 
       # =========================================================
       # 📝 [교체 로직] 사용량 계산, 누적 저장 및 리스트 기반 자동 넘김
-        # 3. 사용량 계산 (당월 - 전월)
+        # 8-3. 사용량 계산 (당월 - 전월)
         use_e = res_e - prev_e
         use_w = res_w - prev_w
         use_h = res_h - prev_h
         use_n = res_n - prev_n
         use_c = res_c - prev_c
 
-# 📝 [8번 교체] 들여쓰기 교정 및 7일 이내 덮어쓰기 로직
-        # 4. 데이터 저장 프로세스
+        # 8-4. 데이터 저장 프로세스 들여쓰기 교정 및 7일 이내 덮어쓰기 로직
         try:
             with st.spinner("데이터 기록 중..."):
                 kst = timezone(timedelta(hours=9))
                 now_dt = datetime.now(kst)
-                now_str = now_dt.strftime('%Y-%m-%d %H:%M:%S')
+                new_row = [
+                    now_str, selected_building, room,
+                    float(round(prev_e, 0)), float(round(res_e, 0)), float(round(use_e, 0)),
+                    float(round(prev_w, 0)), float(round(res_w, 0)), float(round(use_w, 0)),
+                    float(round(prev_h, 0)), float(round(res_h, 0)), float(round(use_h, 0)),
+                    float(round(prev_n, 3)), float(round(res_n, 3)), float(round(use_n, 3)),
+                    float(round(prev_c, 3)), float(round(res_c, 3)), float(round(use_c, 3))
+                ]
 
-                # 1. 기존 데이터 로드하여 7일 이내 기록 있는지 확인
+                # 8-4-1. 기존 데이터 로드하여 7일 이내 기록 있는지 확인
                 data = sheet.get_all_records()
                 df = pd.DataFrame(data)
                 target_row_idx = -1 
@@ -481,7 +487,7 @@ if submit:
                     round(prev_c, 3), round(res_c, 3), round(use_c, 3)
                 ]
 
-                # 2. 판별 결과에 따라 업데이트 또는 추가
+                # 8-4-2. 판별 결과에 따라 업데이트 또는 추가
                 if target_row_idx != -1:
                     sheet.update(f"A{target_row_idx}:R{target_row_idx}", [new_row])
                     st.toast(f"🔄 {room}호 기록이 최신 수치로 수정되었습니다!")
