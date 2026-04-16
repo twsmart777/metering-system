@@ -74,7 +74,7 @@ scope = [
 ]
 
 # --- 2. 화면 설정 및 파라미터 읽기 (인증 판별용) ---
-st.set_page_config(page_title=f"{COMPANY_NAME} 통합검침", layout="centered")
+st.set_page_config(page_title=f"{COMPANY_NAME} 통합검침", layout="wide")
 
 # 주소창 파라미터 읽기
 url_params = st.query_params
