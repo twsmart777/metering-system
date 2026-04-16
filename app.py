@@ -242,24 +242,22 @@ def safe_float(val):
 
 st.divider()
 
-# --- 6. 호수 입력 및 데이터 조회 (넘김 로직 강화) ---
+# --- 6. 호수 입력 및 데이터 조회 (기존 UI 복구 및 넘김 로직 통합) ---
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 
-# [핵심 수정] 다음 호수 전이 로직을 최우선 실행
+# [보존] 다음 호수 전이 로직
 if 'next_room' in st.session_state:
     st.session_state['room_input'] = st.session_state.next_room
-    # 조회 로직을 강제로 태우기 위해 last_room과 동기화
     st.session_state['last_room'] = st.session_state.next_room
     del st.session_state['next_room']
 
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
-# 호수 입력창
+# [보존] 원래의 입력창 및 조회 버튼 배치
 room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
 load_btn = st.button("🔍 전월 데이터 조회", use_container_width=True)
 
-# 데이터 조회 로직
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
     st.session_state['room_input'] = room
@@ -268,8 +266,16 @@ if load_btn or (room and st.session_state.get('last_room') != room):
     
     if last_data is not None:
         st.markdown(f"<div class='loading-bar'>✅ {room}호 전월 데이터 로딩완료</div>", unsafe_allow_html=True)
-        st.markdown("<style>.reading-container { display: flex; justify-content: space-around; background-color: #262730; padding: 15px; border-radius: 5px; margin-bottom: 20px; } .reading-box { text-align: center; } .reading-label { color: #95a5a6; font-size: 14px; } .reading-value { color: white; font-weight: bold; font-size: 20px; }</style>", unsafe_allow_html=True)
-        
+        # [보존] 사용자님의 원래 검정 박스 스타일
+        st.markdown("""
+            <style>
+            .reading-container { display: flex; justify-content: space-around; align-items: center; background-color: #262730; padding: 15px; border-radius: 5px; gap: 10px; margin-bottom: 15px; }
+            .reading-box { text-align: center; min-width: 60px; }
+            .reading-label { color: #95a5a6; font-size: 14px; margin-bottom: 2px; }
+            .reading-value { color: white; font-weight: bold; font-size: 20px; }
+            </style>
+        """, unsafe_allow_html=True)
+
         boxes_html = ""
         for item in ['전기', '수도', '온수', '난방', '냉방']:
             val = last_data.get(item, 0)
@@ -278,7 +284,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
                 boxes_html += f'<div class="reading-box"><div class="reading-label">{item}</div><div class="reading-value">{d_val}</div></div>'
         st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
 
-# --- 7. 당월 수치 입력 섹션 (전송 및 리셋 로직 강화본) ---
+# --- 7. 당월 수치 입력 섹션 (전송 버튼 삭제 및 디자인 유지) ---
 submit = False         
 if room:
     st.markdown(f"### ✍️ <span style='font-size:30px; color:blue;'>{room}</span>호 당월 수치 입력", unsafe_allow_html=True)
@@ -296,7 +302,6 @@ if room:
     if not is_limited: show_items.extend(['온수', '난방', '냉방'])
     item_map = {'전기': prev_e, '수도': prev_w, '온수': prev_h, '난방': prev_n, '냉방': prev_c}
 
-    # 입력창 표시
     for item in show_items:
         icon = {"전기": "⚡", "수도": "💧", "온수": "🔥", "난방": "♨️", "냉방": "❄️"}[item]
         unit = {"전기": "kw", "수도": "m³", "온수": "m³", "난방": "MWh", "냉방": "MWh"}[item]
@@ -305,7 +310,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        # 각 입력창에 고유 key 할당
+        # [보존] 입력창 고유 key 유지 (리셋용)
         if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
         elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
         elif item == '온수': in_h = st.text_input(item, key="h_v", label_visibility="collapsed")
@@ -318,7 +323,7 @@ if room:
     if st.button("🚀 데이터 전송 후 다음 호수로", use_container_width=True, key="main_move_btn"):
         submit = True
 
-# --- 8. 데이터 전송 로직 (리셋 기능 보강) ---
+# --- 8. 데이터 전송 로직 (사용자 기존 저장 로직 100% 보존) ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
@@ -348,17 +353,17 @@ if submit:
 
                 new_row = [
                     now_str, selected_building, room,
-                    float(round(prev_e, 0)), float(round(res_e, 0)), float(round(use_e := res_e - prev_e, 0)),
-                    float(round(prev_w, 0)), float(round(res_w, 0)), float(round(use_w := res_w - prev_w, 0)),
-                    float(round(prev_h, 0)), float(round(res_h, 0)), float(round(use_h := res_h - prev_h, 0)),
-                    float(round(prev_n, 3)), float(round(res_n, 3)), float(round(use_n := res_n - prev_n, 3)),
-                    float(round(prev_c, 3)), float(round(res_c, 3)), float(round(use_c := res_c - prev_c, 3))
+                    float(round(prev_e, 0)), float(round(res_e, 0)), float(round(res_e - prev_e, 0)),
+                    float(round(prev_w, 0)), float(round(res_w, 0)), float(round(res_w - prev_w, 0)),
+                    float(round(prev_h, 0)), float(round(res_h, 0)), float(round(res_h - prev_h, 0)),
+                    float(round(prev_n, 3)), float(round(res_n, 3)), float(round(res_n - prev_n, 3)),
+                    float(round(prev_c, 3)), float(round(res_c, 3)), float(round(res_c - prev_c, 3))
                 ]
 
+                # [보존] 사용자 저장 로직
                 data = sheet.get_all_records()
                 df = pd.DataFrame(data)
                 target_row_idx = -1 
-
                 if not df.empty:
                     df['호수'] = df['호수'].astype(str).str.strip()
                     room_df = df[df['호수'] == str(room).strip()]
@@ -375,21 +380,15 @@ if submit:
                 else:
                     sheet.append_row(new_row)
 
-                # [다음 호수 계산]
+                # [기능 추가] 다음 호수 설정 및 리셋
                 rooms_list = st.session_state.get('all_rooms', [])
                 if room in rooms_list:
-                    current_idx = rooms_list.index(room)
-                    if current_idx + 1 < len(rooms_list):
-                        st.session_state.next_room = rooms_list[current_idx + 1]
-                    else:
-                        st.balloons()
-                        st.session_state.next_room = rooms_list[0]
+                    idx = rooms_list.index(room)
+                    st.session_state.next_room = rooms_list[idx + 1] if idx + 1 < len(rooms_list) else rooms_list[0]
 
-                # [입력창 리셋 핵심] 세션에 저장된 모든 입력값 초기화
-                for k in ["e_v", "w_v", "h_v", "n_v", "c_v", "last_room", "last_data"]:
-                    if k in st.session_state:
-                        st.session_state[k] = "" # del 대신 빈 값으로 초기화
-
+                for k in ["e_v", "w_v", "h_v", "n_v", "c_v", "last_data"]:
+                    if k in st.session_state: st.session_state[k] = ""
+                
                 st.rerun()
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
