@@ -242,7 +242,7 @@ def safe_float(val):
 
 st.divider()
 
-# --- 6. 호수 입력 및 데이터 조회 (기존 UI 복구 및 넘김 로직 통합) ---
+# --- 6. 호수 입력 및 데이터 조회 (사용자 디자인 복구 및 넘김 로직) ---
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 
 # [보존] 다음 호수 전이 로직
@@ -254,7 +254,7 @@ if 'next_room' in st.session_state:
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
-# [보존] 원래의 입력창 및 조회 버튼 배치
+# [보존] 원래의 입력창 및 조회 버튼 (세로 배치)
 room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
 load_btn = st.button("🔍 전월 데이터 조회", use_container_width=True)
 
@@ -266,7 +266,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
     
     if last_data is not None:
         st.markdown(f"<div class='loading-bar'>✅ {room}호 전월 데이터 로딩완료</div>", unsafe_allow_html=True)
-        # [보존] 사용자님의 원래 검정 박스 스타일
+        # [보존] 사용자님의 원래 검정 박스 스타일 (수정 금지)
         st.markdown("""
             <style>
             .reading-container { display: flex; justify-content: space-around; align-items: center; background-color: #262730; padding: 15px; border-radius: 5px; gap: 10px; margin-bottom: 15px; }
@@ -284,7 +284,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
                 boxes_html += f'<div class="reading-box"><div class="reading-label">{item}</div><div class="reading-value">{d_val}</div></div>'
         st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
 
-# --- 7. 당월 수치 입력 섹션 (전송 버튼 삭제 및 디자인 유지) ---
+# --- 7. 당월 수치 입력 섹션 ---
 submit = False         
 if room:
     st.markdown(f"### ✍️ <span style='font-size:30px; color:blue;'>{room}</span>호 당월 수치 입력", unsafe_allow_html=True)
@@ -302,6 +302,7 @@ if room:
     if not is_limited: show_items.extend(['온수', '난방', '냉방'])
     item_map = {'전기': prev_e, '수도': prev_w, '온수': prev_h, '난방': prev_n, '냉방': prev_c}
 
+    # [보존] 입력창 고유 key 유지 및 세로 배치
     for item in show_items:
         icon = {"전기": "⚡", "수도": "💧", "온수": "🔥", "난방": "♨️", "냉방": "❄️"}[item]
         unit = {"전기": "kw", "수도": "m³", "온수": "m³", "난방": "MWh", "냉방": "MWh"}[item]
@@ -310,7 +311,6 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        # [보존] 입력창 고유 key 유지 (리셋용)
         if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
         elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
         elif item == '온수': in_h = st.text_input(item, key="h_v", label_visibility="collapsed")
@@ -323,7 +323,7 @@ if room:
     if st.button("🚀 데이터 전송 후 다음 호수로", use_container_width=True, key="main_move_btn"):
         submit = True
 
-# --- 8. 데이터 전송 로직 (사용자 기존 저장 로직 100% 보존) ---
+# --- 8. 데이터 전송 로직 ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
@@ -380,7 +380,7 @@ if submit:
                 else:
                     sheet.append_row(new_row)
 
-                # [기능 추가] 다음 호수 설정 및 리셋
+                # [중요] 다음 호수 설정 및 세션 초기화
                 rooms_list = st.session_state.get('all_rooms', [])
                 if room in rooms_list:
                     idx = rooms_list.index(room)
