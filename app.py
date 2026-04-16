@@ -119,15 +119,30 @@ def get_gspread_client():
         return None
 
 client = get_gspread_client()
+# =========================================================
+# 📝 [추가 및 수정 로직] 현장별 시트 탭 대응
 if client:
     try:
-        spreadsheet = client.open("검침데이터_관리")
+        # 전체 스프레드시트 열기
+        spr = client.open("검침데이터_관리")
+        
+        # 1. 현장 정보 기준 시트 (고정)
+        info_sheet = spr.worksheet("현장정보")
+        
+        # 2. 현장별 검침 시트 (선택된 현장명과 동일한 탭 연결)
+        # selected_building 값에 따라 실시간으로 시트가 결정됩니다.
+        try:
+            sheet = spr.worksheet(selected_building)
+        except:
+            st.warning(f"⚠️ '{selected_building}' 이름의 시트 탭을 찾을 수 없습니다.")
+            sheet = None
+
     except Exception as e:
         st.error(f"⚠️ 시트 열기 실패: {e}")
         st.stop()
 else:
     st.stop()
-
+# =========================================================
 # --- 5. 화면 디자인 로직 (수정됨) ---
 
 # [수정] url_building(현장 파라미터)이 없을 때만 상단 프라임시티 로고 박스를 표시
@@ -156,13 +171,37 @@ else:
         st.info("전용 링크로 접속하거나 현장을 선택해 주세요.")
         st.stop()
 
-# 시트 연결 및 유틸리티 함수 (기존과 동일)
+# =========================================================
+# 📝 [교체 로직] 현장정보 시트 연결 및 18개 컬럼 대응
 try:
+    # 1. 현장별 검침기록 시트 연결 (없으면 생성)
     sheet = spreadsheet.worksheet(selected_building)
 except gspread.exceptions.WorksheetNotFound:
-    sheet = spreadsheet.add_worksheet(title=selected_building, rows="1000", cols="10")
-    sheet.append_row(["일시", "건물명", "호수", "전기", "수도", "온수", "난방", "냉방"])
+    # 18개 컬럼 관리를 위해 cols를 20으로 여유있게 생성
+    sheet = spreadsheet.add_worksheet(title=selected_building, rows="1000", cols="20")
+    # 헤더를 전/당/사 3종 세트(총 18개)로 자동 생성
+    header = ["일시", "현장명", "호수", 
+              "전기-전월", "전기-당월", "전기사용량", 
+              "수도-전월", "수도-당월", "수도사용량", 
+              "온수-전월", "온수-당월", "온수사용량", 
+              "난방-전월", "난방-당월", "난방사용량", 
+              "냉방-전월", "냉방-당월", "냉방사용량"]
+    sheet.append_row(header)
 
+# 2. [현장정보] 시트에서 호수 명단 불러오기
+try:
+    info_sheet = spreadsheet.worksheet("현장정보")
+    info_data = info_sheet.get_all_records()
+    
+    # 해당 현장 호수만 필터링 및 숫자순 정렬
+    room_list = [str(row['호수']).strip() for row in info_data if str(row['현장명']).strip() == selected_building]
+    all_rooms = sorted(room_list, key=lambda x: int(''.join(filter(str.isdigit, x))) if any(c.isdigit() for c in x) else x)
+    st.session_state['all_rooms'] = all_rooms
+except Exception as e:
+    st.error(f"⚠️ '현장정보' 시트를 읽어올 수 없습니다: {e}")
+    all_rooms = []
+
+# 3. 전월 지침 조회 함수 (기존 로직 유지)
 def get_last_reading(target_sheet, room_number):
     try:
         data = target_sheet.get_all_records()
@@ -171,6 +210,7 @@ def get_last_reading(target_sheet, room_number):
         filtered_df = df[df['호수'].astype(str) == str(room_number)]
         return filtered_df.iloc[-1] if not filtered_df.empty else None
     except: return None
+# =========================================================
 
 def safe_float(val):
     try:
@@ -365,38 +405,58 @@ if submit:
             show_error_dialog(error_msg)
             st.stop()
 
-        # 3. 데이터 저장 프로세스 시작
-        try:
-            with st.spinner("데이터 처리 중..."):
-                all_rows = sheet.get_all_values()
-                all_rooms_ordered = [r[2] for r in all_rows if len(r) > 2][1:] # 헤더 제외 순서 유지
+      # =========================================================
+      # 📝 [교체 로직] 사용량 계산, 누적 저장 및 리스트 기반 자동 넘김
+        # 3. 사용량 계산 (당월 - 전월)
+        use_e = res_e - prev_e
+        use_w = res_w - prev_w
+        use_h = res_h - prev_h
+        use_n = res_n - prev_n
+        use_c = res_c - prev_c
 
+        # 4. 데이터 저장 프로세스
+        try:
+            with st.spinner("데이터 기록 중..."):
                 kst = timezone(timedelta(hours=9))
                 now = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')
-                row = [now, selected_building, room, round(res_e, 0), round(res_w, 0), round(res_h, 0), round(res_n, 3), round(res_c, 3)]
 
-                if room in all_rooms_ordered:
-                    row_idx = all_rooms_ordered.index(room) + 2
-                    sheet.update(range_name=f'A{row_idx}:H{row_idx}', values=[row])
-                    st.toast(f"✅ {room}호 변경수정 완료!")
-                else:
-                    sheet.append_row(row)
-                    st.toast(f"✅ {room}호 저장 완료!")
+                # 시트 구조: 일시, 현장명, 호수, 전기(전,당,사), 수도(전,당,사), 온수(전,당,사), 난방(전,당,사), 냉방(전,당,사)
+                row = [
+                    now, selected_building, room,
+                    round(prev_e, 0), round(res_e, 0), round(use_e, 0),
+                    round(prev_w, 0), round(res_w, 0), round(use_w, 0),
+                    round(prev_h, 0), round(res_h, 0), round(use_h, 0),
+                    round(prev_n, 3), round(res_n, 3), round(use_n, 3),
+                    round(prev_c, 3), round(res_c, 3), round(use_c, 3)
+                ]
 
-                # 다음 호수 찾기: 시트의 물리적 순서 그대로 따라감 (정렬 금지)
-                next_room = ""
-                if room in all_rooms_ordered:
-                    idx = all_rooms_ordered.index(room)
-                    if idx + 1 < len(all_rooms_ordered):
-                        next_room = all_rooms_ordered[idx + 1]
+                # [핵심] 무조건 시트 맨 아래에 새 줄로 추가 (기존 데이터 보존)
+                sheet.append_row(row)
+                st.toast(f"✅ {room}호 기록 완료!")
+
+                # --- 자동 호수 넘김 로직 (현장정보 리스트 기준) ---
+                rooms_list = st.session_state.get('all_rooms', [])
+                if room in rooms_list:
+                    current_idx = rooms_list.index(room)
+                    if current_idx + 1 < len(rooms_list):
+                        # 다음 순서 호수로 이동 세션 예약
+                        st.session_state.next_room = rooms_list[current_idx + 1]
+                    else:
+                        # 마지막 호수일 경우 축하 효과 및 첫 호수 리셋
+                        st.balloons()
+                        st.success(f"🎉 {selected_building} 현장 검침을 모두 마쳤습니다!")
+                        st.session_state.next_room = rooms_list[0]
+
+                # 입력창 및 임시 데이터 초기화
+                for key in ['in_e', 'in_w', 'in_h', 'in_n', 'in_c', 'last_room', 'last_data']:
+                    if key in st.session_state:
+                        del st.session_state[key]
                 
-                st.session_state['room_input'] = next_room
-                if 'last_room' in st.session_state: del st.session_state['last_room']
-                if 'last_data' in st.session_state: del st.session_state['last_data']
-                
-                st.rerun() # 완료 후 새로고침
+                # 페이지 새로고침하여 다음 호수로 전환
+                st.rerun()
+        # =========================================================
                     
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[2026-04-12 05:45]</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[{now}]</div>", unsafe_allow_html=True)
