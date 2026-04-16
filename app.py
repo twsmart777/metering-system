@@ -387,7 +387,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
         # 4) 완성된 검정 박스 출력
         st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
         
-# --- 7. 당월 수치 입력 섹션 (기존 로직 및 가로 배치 통합본) ---
+# --- 7. 당월 수치 입력 섹션 (KeyError 수정 최종본) ---
 if room:
     st.markdown(f"### ✍️ <span style='font-size:30px; color:blue;'>{room}</span>호 당월 수치 입력", unsafe_allow_html=True)
     
@@ -398,27 +398,30 @@ if room:
     current_last_data = st.session_state.get('last_data', None)
     submit = False 
 
-    # 전월 데이터 정의 (NameError 방지)
+    # [변수 정의] 전월 데이터 (영문 변수명 유지)
     prev_e = current_last_data.get('전기', 0) if current_last_data else 0
     prev_w = current_last_data.get('수도', 0) if current_last_data else 0
     prev_h = current_last_data.get('온수', 0) if current_last_data else 0
     prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data else 0.0
     prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data else 0.0
 
-    # 1. 공통 항목 설정: 전기, 수도는 무조건 포함
+    # 1. 공통 항목 설정
     show_items = ['전기', '수도']
     
-    # 2. 조건부 항목 설정: 제한 현장이 아닐 때만 온수, 난방, 냉방 추가
+    # 2. 조건부 항목 설정 (제한 현장이 아닐 때만)
     if not is_limited:
         show_items.extend(['온수', '난방', '냉방'])
+
+    # 한글 항목명과 영문 변수명 매칭 사전 (KeyError 방지)
+    item_map = {'전기': prev_e, '수도': prev_w, '온수': prev_h, '난방': prev_n, '냉방': prev_c}
 
     # --- 항목별 [입력창 + 전송 버튼] 배치 ---
     for item in show_items:
         icon = {"전기": "⚡", "수도": "💧", "온수": "🔥", "난방": "♨️", "냉방": "❄️"}[item]
         unit = {"전기": "kw", "수도": "m³", "온수": "m³", "난방": "MWh", "냉방": "MWh"}[item]
         
-        # 전월 수치 포맷팅
-        p_val = locals()[f'prev_{item[0].lower()}']
+        # 매칭 사전에서 안전하게 전월 값 가져오기
+        p_val = item_map[item]
         p_str = f"{p_val:.3f}" if item in ['난방', '냉방'] else f"{p_val}"
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
