@@ -167,9 +167,9 @@ else:
         st.stop()
 
 # =========================================================
-# 📝 [교체 로직] spr 변수 적용 및 현장별 시트/호수 로드 (최종본)
+# 5-1📝 [교체 로직] spr 변수 적용 및 현장별 시트/호수 로드 (최종본)
 try:
-    # 1. 현장별 검침기록 시트 연결 (4번에서 정의한 spr 사용)
+    #  현장별 검침기록 시트 연결 (4번에서 정의한 spr 사용)
     sheet = spr.worksheet(selected_building)
 except gspread.exceptions.WorksheetNotFound:
     # 18개 컬럼 관리를 위해 신규 생성
@@ -182,7 +182,7 @@ except gspread.exceptions.WorksheetNotFound:
               "냉방-전월", "냉방-당월", "냉방사용량"]
     sheet.append_row(header)
 
-# 2. [현장정보] 시트에서 호수 명단 불러오기
+# 5-2. [현장정보] 시트에서 호수 명단 불러오기
 try:
     info_data = info_sheet.get_all_records()
     room_list = [str(row['호수']).strip() for row in info_data if str(row['현장명']).strip() == selected_building]
@@ -192,29 +192,34 @@ except Exception as e:
     st.error(f"⚠️ '현장정보' 시트를 읽어올 수 없습니다: {e}")
     all_rooms = []
 
-# 3. 전월 지침 조회 함수 (누적 시트의 마지막 행 추출)
+# 5-3. 전월 지침 조회 함수 (누적 시트의 마지막 행 추출)
 def get_last_reading(target_sheet, room_number):
     try:
-        # 1. 시트 전체 데이터 로드
         data = target_sheet.get_all_records()
         if not data: return None
         
         df = pd.DataFrame(data)
         
-        # 2. 데이터 정규화 (가장 중요)
-        # 호수 컬럼을 문자열로 변환하고 앞뒤 공백 제거
+        # 5-3-1. 호수 매칭 (문자열 강제 변환 및 공백 제거)
         df['호수'] = df['호수'].astype(str).str.strip()
         search_room = str(room_number).strip()
         
-        # 3. 해당 호수의 데이터만 필터링
         filtered_df = df[df['호수'] == search_room]
         
         if not filtered_df.empty:
-            # 4. 가장 마지막 행(최신 기록) 반환
-            # 이제 3월 16일 기록 중 해당 호수의 당월값이 4월의 전월값으로 호출됩니다.
-            return filtered_df.iloc[-1]
-        else:
-            return None
+            last_row = filtered_df.iloc[-1]
+            
+            # 5-3-2. [핵심] 시트의 컬럼명을 정확히 찾아서 맵핑
+            # 사용자님의 시트 헤더가 "전기-당월" 인지 "전기" 인지 확인하여 대입
+            result = {
+                '전기': last_row.get('전기-당월') if '전기-당월' in last_row else last_row.get('전기', 0),
+                '수도': last_row.get('수도-당월') if '수도-당월' in last_row else last_row.get('수도', 0),
+                '온수': last_row.get('온수-당월') if '온수-당월' in last_row else last_row.get('온수', 0),
+                '난방': last_row.get('난방-당월') if '난방-당월' in last_row else last_row.get('난방', 0),
+                '냉방': last_row.get('냉방-당월') if '냉방-당월' in last_row else last_row.get('냉방', 0)
+            }
+            return result
+        return None
     except Exception as e:
         return None
 # =========================================================
