@@ -289,16 +289,35 @@ st.markdown("""
         margin-bottom: 5px !important; 
     }
   
-    /* [추가] 입력창이 버튼을 옆으로 밀어내지 않도록 너비 제한 */
-    [data-testid="stTextInput"] {
-        width: 100% !important;
-        min-width: 50px !important; /* 최소 너비를 줄여서 버튼이 들어올 자리를 만듦 */
+    /* 1. 모바일 포함 모든 화면에서 무조건 가로 정렬 강제 */
+    [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 8px !important; /* 입력창과 버튼 사이 간격 */
     }
 
-    /* 칸(Column) 사이의 불필요한 간격을 줄여 한 줄에 들어가게 함 */
+    /* 2. 컬럼이 아래로 밀리는 성질 제거 */
     [data-testid="column"] {
-        padding: 0 5px !important;
+        width: auto !important;
+        min-width: 0px !important;
+        flex: 1 1 auto !important;
     }
+
+    /* 3. 첫 번째 칸(입력창)과 두 번째 칸(버튼)의 너비 비율 강제 고정 */
+    [data-testid="column"]:nth-of-type(1) {
+        flex: 3 !important; /* 입력창이 3만큼 차지 */
+    }
+    [data-testid="column"]:nth-of-type(2) {
+        flex: 1.2 !important; /* 버튼이 1.2만큼 차지 */
+    }
+
+    /* 4. 입력창 너비가 버튼을 밀어내지 않게 설정 */
+    .stTextInput {
+        width: 100% !important;
+    }
+    /* --- 여기까지 교체 끝 --- */
 
     /* [통합] 모든 버튼 스타일 (조회, 개별 전송, 하단 버튼 모두 동일 디자인) */
     div.stButton > button, div[data-testid="stFormSubmitButton"] button {
@@ -334,7 +353,7 @@ st.markdown("""
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 # 호수 입력 및 데이터 조회 (최종 통합본) ---
-room_col, btn_col = st.columns([2, 1])
+room_col, btn_col = st.columns([3, 1.2])
 
 # [기존 기능 유지] 다음 호수 자동 반영 로직
 if 'next_room' in st.session_state:
@@ -437,7 +456,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        col_in, col_btn = st.columns([2, 1])
+        col_in, col_btn = st.columns([3, 1.2])
         with col_in:
             if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
             elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
