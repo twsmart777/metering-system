@@ -289,39 +289,47 @@ st.markdown("""
         margin-bottom: 5px !important; 
     }
   
+    /* [최종] 1. 모든 가로 블록을 강제로 한 줄 배치 */
     [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
+        width: 100% !important;
         gap: 5px !important;
+    }
+
+    /* [최종] 2. 입력창 칸의 너비를 물리적으로 제한 (버튼 밀림 방지) */
+    [data-testid="column"]:nth-of-type(1) {
+        width: 65% !important;      /* 화면의 65%만 사용 */
+        min-width: 65% !important;
+        flex: 0 0 65% !important;
+    }
+
+    /* [최종] 3. 버튼 칸의 너비를 확보 */
+    [data-testid="column"]:nth-of-type(2) {
+        width: 35% !important;      /* 나머지 35% 확보 */
+        min-width: 35% !important;
+        flex: 0 0 35% !important;
+    }
+
+    /* [최종] 4. 입력창 내부가 밖으로 튀어나가지 않게 강제 고정 */
+    .stTextInput, [data-testid="stTextInput"] {
         width: 100% !important;
     }
-
-    /* [교정] 2. 입력창(65%) : 버튼(35%) 비율 강제 고정 */
-    [data-testid="column"]:nth-of-type(1) {
-        flex: 0 0 65% !important;
-        max-width: 65% !important;
-    }
-    [data-testid="column"]:nth-of-type(2) {
-        flex: 0 0 35% !important;
-        max-width: 35% !important;
-    }
-
-    /* [교정] 3. 입력창 높이와 폰트 미세 조정 */
+    
     [data-testid="stTextInput"] input {
-        font-size: 28px !important; /* 22px에서 축소하여 밀림 방지 */
-        height: 65px !important;
-        padding: 0 10px !important;
+        width: 100% !important;
+        font-size: 32px !important; /* 글자 크기를 살짝 줄여 안정성 확보 */
+        padding: 0 8px !important;
     }
 
-    /* [교정] 4. 버튼 내부 글자 잘림 방지 */
+    /* [최종] 5. 버튼이 잘리지 않게 설정 */
     div.stButton > button {
         width: 100% !important;
-        height: 65px !important;
         font-size: 18px !important;
-        white-space: nowrap !important;
         padding: 0 !important;
+        white-space: nowrap !important; /* 글자가 절대 줄바꿈되지 않게 함 */
     }
 
     /* [통합] 모든 버튼 스타일 (조회, 개별 전송, 하단 버튼 모두 동일 디자인) */
