@@ -443,8 +443,12 @@ if submit:
         # 8-4. 데이터 저장 프로세스 들여쓰기 교정 및 7일 이내 덮어쓰기 로직
         try:
             with st.spinner("데이터 기록 중..."):
+                # [순서 교정] 여기서 kst와 now_str을 가장 먼저 정의해야 합니다.
                 kst = timezone(timedelta(hours=9))
                 now_dt = datetime.now(kst)
+                now_str = now_dt.strftime('%Y-%m-%d %H:%M:%S')  # <-- 여기서 정의됨
+
+                # 1. 모든 수치를 float()로 변환하여 저장용 리스트 생성
                 new_row = [
                     now_str, selected_building, room,
                     float(round(prev_e, 0)), float(round(res_e, 0)), float(round(use_e, 0)),
@@ -454,7 +458,7 @@ if submit:
                     float(round(prev_c, 3)), float(round(res_c, 3)), float(round(use_c, 3))
                 ]
 
-                # 8-4-1. 기존 데이터 로드하여 7일 이내 기록 있는지 확인
+                # 2. 기존 데이터 로드하여 7일 이내 기록 있는지 확인
                 data = sheet.get_all_records()
                 df = pd.DataFrame(data)
                 target_row_idx = -1 
@@ -468,29 +472,19 @@ if submit:
                         last_entry = room_df.iloc[-1]
                         last_date_str = str(last_entry['일시'])
                         try:
+                            # 여기서도 정의된 kst를 사용합니다.
                             last_date = datetime.strptime(last_date_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=kst)
                             days_diff = (now_dt - last_date).days
                             
-                            # 7일 이내면 해당 줄 번호 저장 (헤더 1행 포함하여 +2)
                             if days_diff <= 7:
                                 target_row_idx = int(room_df.index[-1]) + 2
                         except:
                             pass
 
-                # 저장할 데이터 배열
-                new_row = [
-                    now_str, selected_building, room,
-                    round(prev_e, 0), round(res_e, 0), round(use_e, 0),
-                    round(prev_w, 0), round(res_w, 0), round(use_w, 0),
-                    round(prev_h, 0), round(res_h, 0), round(use_h, 0),
-                    round(prev_n, 3), round(res_n, 3), round(use_n, 3),
-                    round(prev_c, 3), round(res_c, 3), round(use_c, 3)
-                ]
-
-                # 8-4-2. 판별 결과에 따라 업데이트 또는 추가
+                # 3. 판별 결과에 따라 업데이트 또는 추가
                 if target_row_idx != -1:
                     sheet.update(f"A{target_row_idx}:R{target_row_idx}", [new_row])
-                    st.toast(f"🔄 {room}호 기록이 최신 수치로 수정되었습니다!")
+                    st.toast(f"🔄 {room}호 기존 기록이 수정되었습니다!")
                 else:
                     sheet.append_row(new_row)
                     st.toast(f"✅ {room}호 새 기록이 저장되었습니다!")
