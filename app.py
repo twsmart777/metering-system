@@ -195,13 +195,28 @@ except Exception as e:
 # 3. 전월 지침 조회 함수 (누적 시트의 마지막 행 추출)
 def get_last_reading(target_sheet, room_number):
     try:
+        # 1. 시트 전체 데이터 로드
         data = target_sheet.get_all_records()
         if not data: return None
+        
         df = pd.DataFrame(data)
-        # 해당 호수의 데이터 중 가장 아래(최신) 행을 반환
-        filtered_df = df[df['호수'].astype(str) == str(room_number)]
-        return filtered_df.iloc[-1] if not filtered_df.empty else None
-    except: return None
+        
+        # 2. 데이터 정규화 (가장 중요)
+        # 호수 컬럼을 문자열로 변환하고 앞뒤 공백 제거
+        df['호수'] = df['호수'].astype(str).str.strip()
+        search_room = str(room_number).strip()
+        
+        # 3. 해당 호수의 데이터만 필터링
+        filtered_df = df[df['호수'] == search_room]
+        
+        if not filtered_df.empty:
+            # 4. 가장 마지막 행(최신 기록) 반환
+            # 이제 3월 16일 기록 중 해당 호수의 당월값이 4월의 전월값으로 호출됩니다.
+            return filtered_df.iloc[-1]
+        else:
+            return None
+    except Exception as e:
+        return None
 # =========================================================
 
 def safe_float(val):
