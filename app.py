@@ -286,11 +286,25 @@ st.markdown("""
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 room_col, btn_col = st.columns([3, 1])
 
+# --- 직전 한 줄 (기존 코드) ---
+room_col, btn_col = st.columns([3, 1])
+
+# =========================================================
+# 📝 [6번 교체] 전송 후 다음 호수(next_room)를 입력창에 자동 반영
+if 'next_room' in st.session_state:
+    # 8번 로직에서 예약된 다음 호수가 있다면 세션 입력값으로 강제 설정
+    st.session_state['room_input'] = st.session_state.next_room
+    # 사용 후 삭제하여 다음 입력 대기
+    del st.session_state['next_room']
+
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
 with room_col:
+    # value=st.session_state['room_input']을 통해 다음 호수가 화면에 표시됨
     room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
+# =========================================================
+
 with btn_col:
     load_btn = st.button("조회 🔍", use_container_width=True)
 
