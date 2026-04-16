@@ -420,85 +420,72 @@ if submit:
         use_n = res_n - prev_n
         use_c = res_c - prev_c
 
+# 📝 [8번 교체] 들여쓰기 교정 및 7일 이내 덮어쓰기 로직
         # 4. 데이터 저장 프로세스
         try:
-    with st.spinner("데이터 기록 중..."):
-        kst = timezone(timedelta(hours=9))
-        now_dt = datetime.now(kst)
-        now_str = now_dt.strftime('%Y-%m-%d %H:%M:%S')
+            with st.spinner("데이터 기록 중..."):
+                kst = timezone(timedelta(hours=9))
+                now_dt = datetime.now(kst)
+                now_str = now_dt.strftime('%Y-%m-%d %H:%M:%S')
 
-        # 1. 기존 데이터 로드 (업데이트 확인용)
-        data = sheet.get_all_records()
-        df = pd.DataFrame(data)
-        
-        target_row_idx = -1 # 업데이트할 행 번호 (기본값 -1은 신규 추가)
+                # 1. 기존 데이터 로드하여 7일 이내 기록 있는지 확인
+                data = sheet.get_all_records()
+                df = pd.DataFrame(data)
+                target_row_idx = -1 
 
-        if not df.empty:
-            # 호수 일치 여부 확인을 위해 형식 통일
-            df['호수'] = df['호수'].astype(str).str.strip()
-            target_room = str(room).strip()
-            
-            # 해당 호수의 기록들만 추출
-            room_df = df[df['호수'] == target_room]
-            
-            if not room_df.empty:
-                # 가장 최근 기록(마지막 행) 가져오기
-                last_entry = room_df.iloc[-1]
-                last_date_str = str(last_entry['일시'])
-                
-                try:
-                    # 마지막 기록 날짜 파싱
-                    last_date = datetime.strptime(last_date_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=kst)
-                    # [핵심 로직] 현재 시간과 마지막 기록 시간의 차이 계산
-                    days_diff = (now_dt - last_date).days
+                if not df.empty:
+                    df['호수'] = df['호수'].astype(str).str.strip()
+                    target_room = str(room).strip()
+                    room_df = df[df['호수'] == target_room]
                     
-                    # 7일 이내라면 해당 행의 인덱스를 저장 (Header가 1행이므로 +2)
-                    if days_diff <= 7:
-                        target_row_idx = int(room_df.index[-1]) + 2
-                except:
-                    pass
+                    if not room_df.empty:
+                        last_entry = room_df.iloc[-1]
+                        last_date_str = str(last_entry['일시'])
+                        try:
+                            last_date = datetime.strptime(last_date_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=kst)
+                            days_diff = (now_dt - last_date).days
+                            
+                            # 7일 이내면 해당 줄 번호 저장 (헤더 1행 포함하여 +2)
+                            if days_diff <= 7:
+                                target_row_idx = int(room_df.index[-1]) + 2
+                        except:
+                            pass
 
-        # 저장할 데이터 행 구성
-        new_row = [
-            now_str, selected_building, room,
-            round(prev_e, 0), round(res_e, 0), round(use_e, 0),
-            round(prev_w, 0), round(res_w, 0), round(use_w, 0),
-            round(prev_h, 0), round(res_h, 0), round(use_h, 0),
-            round(prev_n, 3), round(res_n, 3), round(use_n, 3),
-            round(prev_c, 3), round(res_c, 3), round(use_c, 3)
-        ]
+                # 저장할 데이터 배열
+                new_row = [
+                    now_str, selected_building, room,
+                    round(prev_e, 0), round(res_e, 0), round(use_e, 0),
+                    round(prev_w, 0), round(res_w, 0), round(use_w, 0),
+                    round(prev_h, 0), round(res_h, 0), round(use_h, 0),
+                    round(prev_n, 3), round(res_n, 3), round(use_n, 3),
+                    round(prev_c, 3), round(res_c, 3), round(use_c, 3)
+                ]
 
-        # 2. 판별 결과에 따라 업데이트 또는 추가
-        if target_row_idx != -1:
-            # 7일 이내 기록이 있으면 해당 줄에 덮어쓰기
-            sheet.update(f"A{target_row_idx}:R{target_row_idx}", [new_row])
-            st.toast(f"🔄 {room}호 기존 기록이 수정되었습니다!")
-        else:
-            # 7일이 넘었거나 기록이 없으면 새 줄 추가
-            sheet.append_row(new_row)
-            st.toast(f"✅ {room}호 새 기록이 저장되었습니다!")
+                # 2. 판별 결과에 따라 업데이트 또는 추가
+                if target_row_idx != -1:
+                    sheet.update(f"A{target_row_idx}:R{target_row_idx}", [new_row])
+                    st.toast(f"🔄 {room}호 기록이 최신 수치로 수정되었습니다!")
+                else:
+                    sheet.append_row(new_row)
+                    st.toast(f"✅ {room}호 새 기록이 저장되었습니다!")
 
-                # --- 자동 호수 넘김 로직 (현장정보 리스트 기준) ---
+                # --- 자동 호수 넘김 로직 ---
                 rooms_list = st.session_state.get('all_rooms', [])
                 if room in rooms_list:
                     current_idx = rooms_list.index(room)
                     if current_idx + 1 < len(rooms_list):
-                        # 다음 순서 호수로 이동 세션 예약
                         st.session_state.next_room = rooms_list[current_idx + 1]
                     else:
-                        # 마지막 호수일 경우 축하 효과 및 첫 호수 리셋
                         st.balloons()
-                        st.success(f"🎉 {selected_building} 현장 검침을 모두 마쳤습니다!")
+                        st.success(f"🎉 {selected_building} 현장 완료!")
                         st.session_state.next_room = rooms_list[0]
 
-                # 입력창 및 임시 데이터 초기화
                 for key in ['in_e', 'in_w', 'in_h', 'in_n', 'in_c', 'last_room', 'last_data']:
                     if key in st.session_state:
                         del st.session_state[key]
                 
-                # 페이지 새로고침하여 다음 호수로 전환
                 st.rerun()
-        # =========================================================
+# =========================================================
                     
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
