@@ -4,6 +4,9 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, timedelta, timezone
 import pandas as pd
 import os
+kst = timezone(timedelta(hours=9))
+now = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')
+
 # --- [최종] 시각 경고 강화 버전 (깜빡이 5회) ---
 @st.dialog("⚠️ 수치 오류")
 def show_error_dialog(messages):
