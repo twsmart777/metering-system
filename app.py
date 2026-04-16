@@ -242,73 +242,24 @@ def safe_float(val):
 
 st.divider()
 
-# --- 6. 호수 입력 및 데이터 조회 (원상복구 버전) ---
-st.markdown("""
-    <style>
-    .block-container { padding-top: 1rem !important; max-width: 500px !important; margin: auto; }
-    
-    /* 입력창 설정 (글자 32px, 자간 5px, 배경색 유지) */
-    [data-testid="stTextInput"] > div {
-        height: 80px !important;
-        background-color: #f0f2f6 !important;
-    }
-    
-    /* [수정] 실제 입력되는 숫자 설정 */
-    [data-testid="stTextInput"] input {
-        height: 80px !important;
-        font-size: 40px !important;
-        font-weight: bold !important;
-        letter-spacing: 15px !important;
-        color: #000000 !important; /* 입력 숫자는 검정색 */
-        -webkit-text-fill-color: #000000 !important;
-        padding: 0 15px !important;
-    }
+# --- 6. 호수 입력 및 데이터 조회 (넘김 로직 강화) ---
+st.markdown(f"### 🔢 {selected_building} 호수 입력")
 
-    /* [신규] '호수 입력' 안내 글자 색상 및 클릭 시 사라짐 설정 */
-    [data-testid="stTextInput"] input::placeholder {
-        color: #4a4a4a !important; /* 안내 문구는 짙은 회색 */
-        -webkit-text-fill-color: #4a4a4a !important;
-        opacity: 1 !important;
-    }
-
-    /* 커서 클릭(focus) 시 안내 문구를 투명하게 만들어 숨김 */
-    [data-testid="stTextInput"] input:focus::placeholder {
-        color: transparent !important;
-        -webkit-text-fill-color: transparent !important;
-    }
-
-    /* 버튼 스타일 (노란색 유지, 세로로 길게) */
-    div.stButton > button {
-        height: 70px !important;
-        width: 100% !important;
-        font-size: 24px !important;
-        font-weight: bold !important;
-        background-color: #FFD700 !important;
-        color: #000000 !important;
-        border-radius: 12px !important;
-        margin-top: 10px !important;
-    }
-
-    /* 마크다운 텍스트 크기 */
-    [data-testid="stMarkdownContainer"] p { font-size: 24px !important; font-weight: bold !important; }
-    .loading-bar { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; font-weight: bold; margin-bottom: 15px; }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown(f"### 🔢 {selected_building} 호수입력")
-
-# 1. 호수 입력창 (세로 배치)
+# [핵심 수정] 다음 호수 전이 로직을 최우선 실행
 if 'next_room' in st.session_state:
     st.session_state['room_input'] = st.session_state.next_room
+    # 조회 로직을 강제로 태우기 위해 last_room과 동기화
+    st.session_state['last_room'] = st.session_state.next_room
     del st.session_state['next_room']
+
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
-room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수입력", label_visibility="collapsed")
-
-# 2. 조회 버튼 (입력창 아래로 배치)
+# 호수 입력창
+room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
 load_btn = st.button("🔍 전월 데이터 조회", use_container_width=True)
 
+# 데이터 조회 로직
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
     st.session_state['room_input'] = room
@@ -327,7 +278,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
                 boxes_html += f'<div class="reading-box"><div class="reading-label">{item}</div><div class="reading-value">{d_val}</div></div>'
         st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
 
-# --- 7. 당월 수치 입력 섹션 (전송 및 리셋 로직 강화본) ---
+# --- 7. 당월 수치 입력 섹션 ---
 submit = False         
 if room:
     st.markdown(f"### ✍️ <span style='font-size:30px; color:blue;'>{room}</span>호 당월 수치 입력", unsafe_allow_html=True)
@@ -345,7 +296,6 @@ if room:
     if not is_limited: show_items.extend(['온수', '난방', '냉방'])
     item_map = {'전기': prev_e, '수도': prev_w, '온수': prev_h, '난방': prev_n, '냉방': prev_c}
 
-    # 입력창 표시
     for item in show_items:
         icon = {"전기": "⚡", "수도": "💧", "온수": "🔥", "난방": "♨️", "냉방": "❄️"}[item]
         unit = {"전기": "kw", "수도": "m³", "온수": "m³", "난방": "MWh", "냉방": "MWh"}[item]
@@ -354,7 +304,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        # 각 입력창에 고유 key 할당
+        # 입력창 위젯 (key를 통해 리셋 제어)
         if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
         elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
         elif item == '온수': in_h = st.text_input(item, key="h_v", label_visibility="collapsed")
@@ -367,7 +317,7 @@ if room:
     if st.button("🚀 데이터 전송 후 다음 호수로", use_container_width=True, key="main_move_btn"):
         submit = True
 
-# --- 8. 데이터 전송 로직 (리셋 기능 보강) ---
+# --- 8. 데이터 전송 및 자동 넘김 로직 ---
 if submit:
     if not room:
         st.error("❗ 호수를 입력해 주세요.")
@@ -397,17 +347,17 @@ if submit:
 
                 new_row = [
                     now_str, selected_building, room,
-                    float(round(prev_e, 0)), float(round(res_e, 0)), float(round(use_e := res_e - prev_e, 0)),
-                    float(round(prev_w, 0)), float(round(res_w, 0)), float(round(use_w := res_w - prev_w, 0)),
-                    float(round(prev_h, 0)), float(round(res_h, 0)), float(round(use_h := res_h - prev_h, 0)),
-                    float(round(prev_n, 3)), float(round(res_n, 3)), float(round(use_n := res_n - prev_n, 3)),
-                    float(round(prev_c, 3)), float(round(res_c, 3)), float(round(use_c := res_c - prev_c, 3))
+                    float(round(prev_e, 0)), float(round(res_e, 0)), float(round(res_e - prev_e, 0)),
+                    float(round(prev_w, 0)), float(round(res_w, 0)), float(round(res_w - prev_w, 0)),
+                    float(round(prev_h, 0)), float(round(res_h, 0)), float(round(res_h - prev_h, 0)),
+                    float(round(prev_n, 3)), float(round(res_n, 3)), float(round(res_n - prev_n, 3)),
+                    float(round(prev_c, 3)), float(round(res_c, 3)), float(round(res_c - prev_c, 3))
                 ]
 
+                # 시트 업데이트
                 data = sheet.get_all_records()
                 df = pd.DataFrame(data)
                 target_row_idx = -1 
-
                 if not df.empty:
                     df['호수'] = df['호수'].astype(str).str.strip()
                     room_df = df[df['호수'] == str(room).strip()]
@@ -424,7 +374,7 @@ if submit:
                 else:
                     sheet.append_row(new_row)
 
-                # [다음 호수 계산]
+                # [중요] 다음 호수 설정 로직
                 rooms_list = st.session_state.get('all_rooms', [])
                 if room in rooms_list:
                     current_idx = rooms_list.index(room)
@@ -434,118 +384,12 @@ if submit:
                         st.balloons()
                         st.session_state.next_room = rooms_list[0]
 
-                # [입력창 리셋 핵심] 세션에 저장된 모든 입력값 초기화
-                for k in ["e_v", "w_v", "h_v", "n_v", "c_v", "last_room", "last_data"]:
+                # [중요] 세션 리셋 (입력창 비우기)
+                for k in ["e_v", "w_v", "h_v", "n_v", "c_v", "last_data"]:
                     if k in st.session_state:
-                        st.session_state[k] = "" # del 대신 빈 값으로 초기화
-
-                st.rerun()
-        except Exception as e:
-            st.error(f"❗ 오류 발생: {e}")
-
-st.markdown(f"<div style='text-align: right; color: #5d6d7e; font-size: 0.8em; margin-top: 30px;'>[{now}]</div>", unsafe_allow_html=True)
-
-# --- 8. 데이터 전송 로직 ---
-if submit:
-    if not room:
-        st.error("❗ 호수를 입력해 주세요.")
-    else:
-        # 8-1. 입력값 수치화 (입력하지 않았으면 전월값으로 대체)
-        res_e = safe_float(in_e) if in_e else safe_float(prev_e)
-        res_w = safe_float(in_w) if in_w else safe_float(prev_w)
-        res_h = safe_float(in_h) if in_h else safe_float(prev_h)
-        res_n = safe_float(in_n) if in_n else safe_float(prev_n)
-        res_c = safe_float(in_c) if in_c else safe_float(prev_c)
-
-        # 8-2. [검증] 전월 대비 수치 검사
-        error_msg = []
-        if res_e < prev_e: error_msg.append(f"전기({int(res_e)} < {int(prev_e)})")
-        if res_w < prev_w: error_msg.append(f"수도({int(res_w)} < {int(prev_w)})")
-        if res_h < prev_h: error_msg.append(f"온수({int(res_h)} < {int(prev_h)})")
-        if res_n < prev_n: error_msg.append(f"난방({res_n:.3f} < {prev_n:.3f})")
-        if res_c < prev_c: error_msg.append(f"냉방({res_c:.3f} < {prev_c:.3f})")
-
-        if error_msg:
-            # 팝업창 띄우기 (알림음 포함)
-            show_error_dialog(error_msg)
-            st.stop()
-
-      # =========================================================
-      # 📝 [교체 로직] 사용량 계산, 누적 저장 및 리스트 기반 자동 넘김
-        # 8-3. 사용량 계산 (당월 - 전월)
-        use_e = res_e - prev_e
-        use_w = res_w - prev_w
-        use_h = res_h - prev_h
-        use_n = res_n - prev_n
-        use_c = res_c - prev_c
-
-        # 8-4. 데이터 저장 프로세스 들여쓰기 교정 및 7일 이내 덮어쓰기 로직
-        try:
-            with st.spinner("데이터 기록 중..."):
-                # [순서 교정] 여기서 kst와 now_str을 가장 먼저 정의해야 합니다.
-                kst = timezone(timedelta(hours=9))
-                now_dt = datetime.now(kst)
-                now_str = now_dt.strftime('%Y-%m-%d %H:%M:%S')  # <-- 여기서 정의됨
-
-                # 1. 모든 수치를 float()로 변환하여 저장용 리스트 생성
-                new_row = [
-                    now_str, selected_building, room,
-                    float(round(prev_e, 0)), float(round(res_e, 0)), float(round(use_e, 0)),
-                    float(round(prev_w, 0)), float(round(res_w, 0)), float(round(use_w, 0)),
-                    float(round(prev_h, 0)), float(round(res_h, 0)), float(round(use_h, 0)),
-                    float(round(prev_n, 3)), float(round(res_n, 3)), float(round(use_n, 3)),
-                    float(round(prev_c, 3)), float(round(res_c, 3)), float(round(use_c, 3))
-                ]
-
-                # 2. 기존 데이터 로드하여 7일 이내 기록 있는지 확인
-                data = sheet.get_all_records()
-                df = pd.DataFrame(data)
-                target_row_idx = -1 
-
-                if not df.empty:
-                    df['호수'] = df['호수'].astype(str).str.strip()
-                    target_room = str(room).strip()
-                    room_df = df[df['호수'] == target_room]
-                    
-                    if not room_df.empty:
-                        last_entry = room_df.iloc[-1]
-                        last_date_str = str(last_entry['일시'])
-                        try:
-                            # 여기서도 정의된 kst를 사용합니다.
-                            last_date = datetime.strptime(last_date_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=kst)
-                            days_diff = (now_dt - last_date).days
-                            
-                            if days_diff <= 7:
-                                target_row_idx = int(room_df.index[-1]) + 2
-                        except:
-                            pass
-
-                # 3. 판별 결과에 따라 업데이트 또는 추가
-                if target_row_idx != -1:
-                    sheet.update(f"A{target_row_idx}:R{target_row_idx}", [new_row])
-                    st.toast(f"🔄 {room}호 기존 기록이 수정되었습니다!")
-                else:
-                    sheet.append_row(new_row)
-                    st.toast(f"✅ {room}호 새 기록이 저장되었습니다!")
-
-                # --- 자동 호수 넘김 로직 ---
-                rooms_list = st.session_state.get('all_rooms', [])
-                if room in rooms_list:
-                    current_idx = rooms_list.index(room)
-                    if current_idx + 1 < len(rooms_list):
-                        st.session_state.next_room = rooms_list[current_idx + 1]
-                    else:
-                        st.balloons()
-                        st.success(f"🎉 {selected_building} 현장 완료!")
-                        st.session_state.next_room = rooms_list[0]
-
-                for key in ['in_e', 'in_w', 'in_h', 'in_n', 'in_c', 'last_room', 'last_data']:
-                    if key in st.session_state:
-                        del st.session_state[key]
+                        st.session_state[k] = ""
                 
                 st.rerun()
-# =========================================================
-                    
         except Exception as e:
             st.error(f"❗ 오류 발생: {e}")
 
