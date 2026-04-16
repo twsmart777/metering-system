@@ -353,7 +353,7 @@ st.markdown("""
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 # 호수 입력 및 데이터 조회 (최종 통합본) ---
-room_col, btn_col = st.columns([3, 1.2])
+room_col, btn_col = st.columns([1.5, 1.2])
 
 # [기존 기능 유지] 다음 호수 자동 반영 로직
 if 'next_room' in st.session_state:
@@ -456,7 +456,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        col_in, col_btn = st.columns([3, 1.2])
+        col_in, col_btn = st.columns([1.5, 1.2])
         with col_in:
             if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
             elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
