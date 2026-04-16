@@ -386,7 +386,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
 
         # 4) 완성된 검정 박스 출력
         st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
-        
+submit = False         
 # --- 7. 당월 수치 입력 섹션 (KeyError 수정 최종본) ---
 if room:
     st.markdown(f"### ✍️ <span style='font-size:30px; color:blue;'>{room}</span>호 당월 수치 입력", unsafe_allow_html=True)
