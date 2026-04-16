@@ -242,76 +242,73 @@ def safe_float(val):
 
 st.divider()
 
-# --- 6. 호수 입력 및 데이터 조회 (최종 통합 스타일) ---
+# --- 6. 호수 입력 및 데이터 조회 (원상복구 버전) ---
 st.markdown("""
     <style>
-    /* 1. 상단 간격 축소 및 가로 배치 강제 (6:4 비율 고정) */
-    .block-container { padding-top: 1rem !important; max-width: 600px !important; margin: auto; }
+    .block-container { padding-top: 1rem !important; max-width: 500px !important; margin: auto; }
     
-    [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 10px !important;
-        width: 100% !important;
-    }
-
-    /* 3. 입력창 설정 (배경색 f0f2f6 유지, 글자 32px, 자간 확대) */
+    /* 입력창 설정 (글자 32px, 자간 5px, 배경색 유지) */
     [data-testid="stTextInput"] > div {
-        height: 75px !important;
+        height: 80px !important;
         background-color: #f0f2f6 !important;
     }
-
+    
+    /* [수정] 실제 입력되는 숫자 설정 */
     [data-testid="stTextInput"] input {
-        height: 75px !important;
-        font-size: 18px !important;
+        height: 80px !important;
+        font-size: 32px !important;
         font-weight: bold !important;
-        letter-spacing: 4px !important; /* 숫자 사이 간격 */
-        color: #000000 !important;
+        letter-spacing: 5px !important;
+        color: #000000 !important; /* 입력 숫자는 검정색 */
         -webkit-text-fill-color: #000000 !important;
-        padding-left: 15px !important;
+        padding: 0 15px !important;
     }
 
-    /* 4. 모든 버튼 스타일 (노란색 FD700 유지) */
+    /* [신규] '호수 입력' 안내 글자 색상 및 클릭 시 사라짐 설정 */
+    [data-testid="stTextInput"] input::placeholder {
+        color: #4a4a4a !important; /* 안내 문구는 짙은 회색 */
+        -webkit-text-fill-color: #4a4a4a !important;
+        opacity: 1 !important;
+    }
+
+    /* 커서 클릭(focus) 시 안내 문구를 투명하게 만들어 숨김 */
+    [data-testid="stTextInput"] input:focus::placeholder {
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+    }
+
+    /* 버튼 스타일 (노란색 유지, 세로로 길게) */
     div.stButton > button {
-        height: 75px !important;
+        height: 70px !important;
         width: 100% !important;
-        font-size: 22px !important;
+        font-size: 24px !important;
         font-weight: bold !important;
         background-color: #FFD700 !important;
         color: #000000 !important;
         border-radius: 12px !important;
-        border: none !important;
-        white-space: nowrap !important;
+        margin-top: 10px !important;
     }
-    
-    /* 5. 텍스트 및 로딩바 */
-    [data-testid="stMarkdownContainer"] p { font-size: 24px !important; font-weight: bold !important; margin-bottom: 5px !important; }
-    .loading-bar { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; font-weight: bold; margin-bottom: 10px; font-size: 18px; }
+
+    /* 마크다운 텍스트 크기 */
+    [data-testid="stMarkdownContainer"] p { font-size: 24px !important; font-weight: bold !important; }
+    .loading-bar { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; font-weight: bold; margin-bottom: 15px; }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
-room_col, btn_col = st.columns([6,4])
 
-# [기존 기능 유지] 다음 호수 자동 반영 로직
+# 1. 호수 입력창 (세로 배치)
 if 'next_room' in st.session_state:
     st.session_state['room_input'] = st.session_state.next_room
     del st.session_state['next_room']
-
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
-with room_col:
-    # 3비율: 호수 입력창
-    room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
+room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
 
-with btn_col:
-    # 1비율: 조회 버튼 (우측 배치)
-    load_btn = st.button("조회", use_container_width=True)
+# 2. 조회 버튼 (입력창 아래로 배치)
+load_btn = st.button("🔍 전월 데이터 조회", use_container_width=True)
 
-# 데이터 로딩 및 검정 박스 표시 로직
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
     st.session_state['room_input'] = room
@@ -319,100 +316,56 @@ if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_data'] = last_data
     
     if last_data is not None:
-        # 1) 심플 로딩 바 표시
         st.markdown(f"<div class='loading-bar'>✅ {room}호 전월 데이터 로딩완료</div>", unsafe_allow_html=True)
+        st.markdown("<style>.reading-container { display: flex; justify-content: space-around; background-color: #262730; padding: 15px; border-radius: 5px; margin-bottom: 20px; } .reading-box { text-align: center; } .reading-label { color: #95a5a6; font-size: 14px; } .reading-value { color: white; font-weight: bold; font-size: 20px; }</style>", unsafe_allow_html=True)
         
-        # 2) 검정 박스 스타일 정의 (유지)
-        st.markdown("""
-            <style>
-            .reading-container { display: flex; justify-content: space-around; align-items: center; background-color: #262730; padding: 15px; border-radius: 5px; gap: 10px; margin-bottom: 15px; }
-            .reading-box { text-align: center; min-width: 60px; }
-            .reading-label { color: #95a5a6; font-size: 14px; margin-bottom: 2px; }
-            .reading-value { color: white; font-weight: bold; font-size: 20px; }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # 3) 항목 필터링 (데이터가 있는 것만 검정 박스에 추가)
         boxes_html = ""
         for item in ['전기', '수도', '온수', '난방', '냉방']:
             val = last_data.get(item, 0)
-            # 수치가 0보다 크거나 '전기'인 경우에만 표시 (전기는 항상 표시)
             if item == '전기' or (val and float(str(val).replace(',', '')) > 0):
-                # 난방/냉방은 소수점 3자리, 나머지는 정수/문자열 그대로
-                if item in ['난방', '냉방']:
-                    try:
-                        d_val = f"{float(str(val).replace(',', '')):.3f}"
-                    except:
-                        d_val = val
-                else:
-                    d_val = val
-                
-                boxes_html += f"""
-                    <div class="reading-box">
-                        <div class="reading-label">{item}</div>
-                        <div class="reading-value">{d_val}</div>
-                    </div>
-                """
-
-        # 4) 완성된 검정 박스 출력
+                d_val = f"{float(str(val).replace(',', '')):.3f}" if item in ['난방', '냉방'] else val
+                boxes_html += f'<div class="reading-box"><div class="reading-label">{item}</div><div class="reading-value">{d_val}</div></div>'
         st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
+
+# --- 7. 당월 수치 입력 섹션 (전송 버튼 삭제 버전) ---
 submit = False         
-# --- 7. 당월 수치 입력 섹션 (KeyError 수정 최종본) ---
 if room:
     st.markdown(f"### ✍️ <span style='font-size:30px; color:blue;'>{room}</span>호 당월 수치 입력", unsafe_allow_html=True)
     
-    current_site = str(selected_building).strip()
-    limited_sites = ["더빌", "엘리트타워", "S타워"]
-    is_limited = any(site == current_site for site in limited_sites)
-    
     current_last_data = st.session_state.get('last_data', None)
-    submit = False 
+    is_limited = any(site == str(selected_building).strip() for site in ["더빌", "엘리트타워", "S타워"])
 
-    # [변수 정의] 전월 데이터 (영문 변수명 유지)
     prev_e = current_last_data.get('전기', 0) if current_last_data else 0
     prev_w = current_last_data.get('수도', 0) if current_last_data else 0
     prev_h = current_last_data.get('온수', 0) if current_last_data else 0
     prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data else 0.0
     prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data else 0.0
 
-    # 1. 공통 항목 설정
     show_items = ['전기', '수도']
-    
-    # 2. 조건부 항목 설정 (제한 현장이 아닐 때만)
-    if not is_limited:
-        show_items.extend(['온수', '난방', '냉방'])
-
-    # 한글 항목명과 영문 변수명 매칭 사전 (KeyError 방지)
+    if not is_limited: show_items.extend(['온수', '난방', '냉방'])
     item_map = {'전기': prev_e, '수도': prev_w, '온수': prev_h, '난방': prev_n, '냉방': prev_c}
 
-    # --- 항목별 [입력창 + 전송 버튼] 배치 ---
+    # 입력 항목들 (옆의 전송 버튼 없이 입력창만 표시)
     for item in show_items:
         icon = {"전기": "⚡", "수도": "💧", "온수": "🔥", "난방": "♨️", "냉방": "❄️"}[item]
         unit = {"전기": "kw", "수도": "m³", "온수": "m³", "난방": "MWh", "냉방": "MWh"}[item]
-        
-        # 매칭 사전에서 안전하게 전월 값 가져오기
         p_val = item_map[item]
         p_str = f"{p_val:.3f}" if item in ['난방', '냉방'] else f"{p_val}"
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        col_in, col_btn = st.columns([8, 2])
-        with col_in:
-            if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
-            elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
-            elif item == '온수': in_h = st.text_input(item, key="h_v", label_visibility="collapsed")
-            elif item == '난방': in_n = st.text_input(item, key="n_v", label_visibility="collapsed")
-            elif item == '냉방': in_c = st.text_input(item, key="c_v", label_visibility="collapsed")
-        with col_btn:
-            if st.button("전송", key=f"btn_send_{item}"):
-                submit = True
+        # 입력창만 단독으로 표시 (전송 버튼 삭제)
+        if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
+        elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
+        elif item == '온수': in_h = st.text_input(item, key="h_v", label_visibility="collapsed")
+        elif item == '난방': in_n = st.text_input(item, key="n_v", label_visibility="collapsed")
+        elif item == '냉방': in_c = st.text_input(item, key="c_v", label_visibility="collapsed")
 
-    # 3. [계승 로직] S타워 등에서 숨겨진 값들을 전월값으로 자동 설정
-    if is_limited:
-        in_h, in_n, in_c = str(prev_h), str(prev_n), str(prev_c)
-
+    if is_limited: in_h, in_n, in_c = str(prev_h), str(prev_n), str(prev_c)
+    
     st.divider()
-    if st.button("🚀 전송. 호수이동", use_container_width=True, key="main_move_btn"):
+    # 최종 전송 버튼 하나로 통합
+    if st.button("🚀 데이터 전송 후 다음 호수로", use_container_width=True, key="main_move_btn"):
         submit = True
 
 # --- 8. 데이터 전송 로직 ---
