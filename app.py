@@ -245,128 +245,69 @@ st.divider()
 # --- 6. 호수 입력 및 데이터 조회 ---
 st.markdown("""
     <style>
-    /* [추가] 상단 간격 축소 및 버튼 레이아웃용 */
+    /* 1. 상단 간격 및 6:4 가로 배치 강제 */
     .block-container { padding-top: 1rem !important; }
     
-    /* [기존 유지] 1. 전체 위젯에 대해 시스템 다크모드 강제 무시 */
-    [data-testid="stTextInput"] {
-        color-scheme: light !important;
-    }
-
-    /* [기존 유지] 2. 입력창 전체 컨테이너 높이 */
-    [data-testid="stTextInput"] > div {
-        height: 75px !important;
-    }
-
-    /* [기존 유지] 3. 입력창 내부 배경색과 글자색 강제 고정 */
-    [data-testid="stTextInput"] > div > div {
-        height: 75px !important;
-        background-color: #f0f2f6 !important; 
-        color: #000000 !important; 
-    }
-
-    /* [기존 유지] 4. 실제 input 태그 내부 설정 */
-    [data-testid="stTextInput"] input {
-        height: 75px !important;
-        font-size: 22px !important;
-        font-weight: bold !important;
-        color: #000000 !important; 
-        -webkit-text-fill-color: #000000 !important; 
-        background-color: transparent !important;
-        padding: 0 15px !important;
-    }
-
-    /* [기존 유지] 5. 플레이스홀더 색상 고정 */
-    [data-testid="stTextInput"] input::placeholder {
-        color: #888888 !important;
-        -webkit-text-fill-color: #888888 !important;
-    }
-
-    /* [기존 유지] 6. 마크다운 텍스트 크기 */
-    [data-testid="stMarkdownContainer"] p {
-        font-size: 24px !important; 
-        font-weight: bold !important;
-        margin-bottom: 5px !important; 
-    }
-  
-    /* [최종] 1. 모든 가로 블록을 강제로 한 줄 배치 */
     [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
+        gap: 12px !important;
         width: 100% !important;
-        gap: 5px !important;
     }
 
-    /* [최종] 2. 입력창 칸의 너비를 물리적으로 제한 (버튼 밀림 방지) */
+    /* 2. 컬럼 비율 60% : 40% 고정 */
     [data-testid="column"]:nth-of-type(1) {
-        width: 65% !important;      /* 화면의 65%만 사용 */
-        min-width: 65% !important;
-        flex: 0 0 65% !important;
+        flex: 0 0 60% !important;
+        max-width: 60% !important;
     }
-
-    /* [최종] 3. 버튼 칸의 너비를 확보 */
     [data-testid="column"]:nth-of-type(2) {
-        width: 35% !important;      /* 나머지 35% 확보 */
-        min-width: 35% !important;
-        flex: 0 0 35% !important;
+        flex: 0 0 38% !important;
+        max-width: 38% !important;
     }
 
-    /* [최종] 4. 입력창 내부가 밖으로 튀어나가지 않게 강제 고정 */
-    .stTextInput, [data-testid="stTextInput"] {
-        width: 100% !important;
+    /* 3. 입력창 설정 (기존 색상 유지 + 글자 32px + 숫자 간격 대폭 확대) */
+    [data-testid="stTextInput"] > div {
+        height: 85px !important;
+        background-color: #f0f2f6 !important; /* 기존 배경색 유지 */
     }
-    
+
     [data-testid="stTextInput"] input {
-        width: 100% !important;
-        font-size: 32px !important; /* 글자 크기를 살짝 줄여 안정성 확보 */
-        padding: 0 8px !important;
+        height: 85px !important;
+        font-size: 32px !important; /* 요청하신 큰 글자 */
+        font-weight: bold !important;
+        
+        /* [핵심 수정] 숫자와 숫자 사이의 간격을 5px로 대폭 넓힘 */
+        letter-spacing: 5px !important; 
+        
+        color: #000000 !important; /* 기존 검정 글자색 유지 */
+        -webkit-text-fill-color: #000000 !important;
+        padding-left: 25px !important; /* 첫 글자가 왼쪽 벽에 붙지 않게 여백 */
+        background-color: transparent !important;
     }
 
-    /* [최종] 5. 버튼이 잘리지 않게 설정 */
+    /* 4. 버튼 스타일 (기존 노란색 유지) */
     div.stButton > button {
+        height: 85px !important;
         width: 100% !important;
-        font-size: 18px !important;
-        padding: 0 !important;
-        white-space: nowrap !important; /* 글자가 절대 줄바꿈되지 않게 함 */
-    }
-
-    /* [통합] 모든 버튼 스타일 (조회, 개별 전송, 하단 버튼 모두 동일 디자인) */
-    div.stButton > button, div[data-testid="stFormSubmitButton"] button {
-        height: 75px !important; /* 입력창 높이와 맞춤 */
         font-size: 24px !important;
         font-weight: bold !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background-color: #FFD700 !important; /* 노란색 */
+        background-color: #FFD700 !important; /* 기존 노란색 유지 */
         color: #000000 !important;
         border-radius: 12px !important;
-        border: none !important;
+        white-space: nowrap !important;
     }
 
-    /* 버튼 마우스 오버 효과 */
-    div.stButton > button:hover, div[data-testid="stFormSubmitButton"] button:hover {
-        background-color: #FFC400 !important;
-    }
-
-    /* 전월 데이터 로딩 바 */
-    .loading-bar {
-        background-color: #d4edda;
-        color: #155724;
-        padding: 10px 15px;
-        border-radius: 5px;
-        font-weight: bold;
-        margin-bottom: 10px;
-        font-size: 18px;
-    }
+    /* [기존 유지] 마크다운 및 로딩바 */
+    [data-testid="stMarkdownContainer"] p { font-size: 24px !important; font-weight: bold !important; }
+    .loading-bar { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 # 호수 입력 및 데이터 조회 (최종 통합본) ---
-room_col, btn_col = st.columns([1, 1])
+room_col, btn_col = st.columns([0.6, 0.4])
 
 # [기존 기능 유지] 다음 호수 자동 반영 로직
 if 'next_room' in st.session_state:
@@ -469,7 +410,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        col_in, col_btn = st.columns([1, 1])
+        col_in, col_btn = st.columns([0.6, 0.4])
         with col_in:
             if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
             elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
