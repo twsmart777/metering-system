@@ -192,35 +192,45 @@ except Exception as e:
     st.error(f"⚠️ '현장정보' 시트를 읽어올 수 없습니다: {e}")
     all_rooms = []
 
-# 5-3. 전월 지침 조회 함수 (누적 시트의 마지막 행 추출)
+# 📝 [5-3 최종] 7일 필터링 + 사용자님의 안전한 컬럼 매칭 로직 통합
 def get_last_reading(target_sheet, room_number):
     try:
         data = target_sheet.get_all_records()
         if not data: return None
         
         df = pd.DataFrame(data)
-        
-        # 5-3-1. 호수 매칭 (문자열 강제 변환 및 공백 제거)
         df['호수'] = df['호수'].astype(str).str.strip()
         search_room = str(room_number).strip()
         
-        filtered_df = df[df['호수'] == search_room]
+        kst = timezone(timedelta(hours=9))
+        now_dt = datetime.now(kst)
         
-        if not filtered_df.empty:
-            last_row = filtered_df.iloc[-1]
-            
-            # 5-3-2. [핵심] 시트의 컬럼명을 정확히 찾아서 맵핑
-            # 사용자님의 시트 헤더가 "전기-당월" 인지 "전기" 인지 확인하여 대입
-            result = {
-                '전기': last_row.get('전기-당월') if '전기-당월' in last_row else last_row.get('전기', 0),
-                '수도': last_row.get('수도-당월') if '수도-당월' in last_row else last_row.get('수도', 0),
-                '온수': last_row.get('온수-당월') if '온수-당월' in last_row else last_row.get('온수', 0),
-                '난방': last_row.get('난방-당월') if '난방-당월' in last_row else last_row.get('난방', 0),
-                '냉방': last_row.get('냉방-당월') if '냉방-당월' in last_row else last_row.get('냉방', 0)
-            }
-            return result
-        return None
-    except Exception as e:
+        room_df = df[df['호수'] == search_room].copy()
+        if room_df.empty: return None
+
+        # 1. [필터링] 7일 이내 기록은 전월 지침에서 제외 (재입력/수정 시 방어)
+        def is_valid_prev_data(date_str):
+            try:
+                record_date = datetime.strptime(str(date_str), '%Y-%m-%d %H:%M:%S').replace(tzinfo=kst)
+                return (now_dt - record_date).days > 7
+            except:
+                return False
+
+        valid_prev_df = room_df[room_df['일시'].apply(is_valid_prev_data)]
+        
+        # 7일 이전 데이터가 있으면 그것을 사용, 없으면 전체 중 첫 번째(가장 오래된 것) 사용
+        last_row = valid_prev_df.iloc[-1] if not valid_prev_df.empty else room_df.iloc[0]
+
+        # 2. [사용자님 원래 로직 그대로] 이중 체크 매핑
+        result = {
+            '전기': last_row.get('전기-당월') if '전기-당월' in last_row else last_row.get('전기', 0),
+            '수도': last_row.get('수도-당월') if '수도-당월' in last_row else last_row.get('수도', 0),
+            '온수': last_row.get('온수-당월') if '온수-당월' in last_row else last_row.get('온수', 0),
+            '난방': last_row.get('난방-당월') if '난방-당월' in last_row else last_row.get('난방', 0.0),
+            '냉방': last_row.get('냉방-당월') if '냉방-당월' in last_row else last_row.get('냉방', 0.0)
+        }
+        return result
+    except:
         return None
 # =========================================================
 
