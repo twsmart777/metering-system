@@ -265,7 +265,7 @@ st.markdown("""
 
     [data-testid="stTextInput"] input {
         height: 75px !important;
-        font-size: 32px !important;
+        font-size: 18px !important;
         font-weight: bold !important;
         letter-spacing: 4px !important; /* 숫자 사이 간격 */
         color: #000000 !important;
