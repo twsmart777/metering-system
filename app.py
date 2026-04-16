@@ -387,53 +387,60 @@ if load_btn or (room and st.session_state.get('last_room') != room):
         # 4) 완성된 검정 박스 출력
         st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
         
-# --- 7. 검침 수치 입력 폼 ---
-with st.form("inspection_form", clear_on_submit=True):
+# --- 7. 당월 수치 입력 섹션 (기존 로직 및 가로 배치 통합본) ---
+if room:
+    st.markdown(f"### ✍️ <span style='font-size:30px; color:blue;'>{room}</span>호 당월 수치 입력", unsafe_allow_html=True)
+    
     current_site = str(selected_building).strip()
     limited_sites = ["더빌", "엘리트타워", "S타워"]
     is_limited = any(site == current_site for site in limited_sites)
     
-    st.caption(f"📍 현재 현장: {current_site} / 필터링 적용: {'예' if is_limited else '아니오'}")
-    st.markdown(f"### ✍️ :blue[{room}]호 당월 수치 입력")
-    
-    # [중요] 데이터프레임 체크 및 전월 데이터 로딩을 최상단으로 이동
     current_last_data = st.session_state.get('last_data', None)
-    has_data = current_last_data is not None and not (isinstance(current_last_data, pd.DataFrame) and current_last_data.empty)
-    
-    # 현장 종류와 상관없이 모든 전월 데이터를 여기서 미리 정의 (NameError 방지)
-    prev_e = current_last_data.get('전기', 0) if has_data else 0
-    prev_w = current_last_data.get('수도', 0) if has_data else 0
-    prev_h = current_last_data.get('온수', 0) if has_data else 0
-    prev_n = safe_float(current_last_data.get('난방', 0.0)) if has_data else 0.0
-    prev_c = safe_float(current_last_data.get('냉방', 0.0)) if has_data else 0.0
+    submit = False 
 
-    # 1. 공통 항목: 전기, 수도 (모든 현장 표시)
-    st.markdown(f"⚡ **전기** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_e} kw)", unsafe_allow_html=True)
-    in_e = st.text_input("전기", key="e_v", label_visibility="collapsed", placeholder="")
-    
-    st.markdown(f"💧 **수도** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_w} $m^3$)", unsafe_allow_html=True)
-    in_w = st.text_input("수도", key="w_v", label_visibility="collapsed", placeholder="")
+    # 전월 데이터 정의 (NameError 방지)
+    prev_e = current_last_data.get('전기', 0) if current_last_data else 0
+    prev_w = current_last_data.get('수도', 0) if current_last_data else 0
+    prev_h = current_last_data.get('온수', 0) if current_last_data else 0
+    prev_n = safe_float(current_last_data.get('난방', 0.0)) if current_last_data else 0.0
+    prev_c = safe_float(current_last_data.get('냉방', 0.0)) if current_last_data else 0.0
 
-    # 2. 조건부 항목: 온수, 난방, 냉방
+    # 1. 공통 항목 설정: 전기, 수도는 무조건 포함
+    show_items = ['전기', '수도']
+    
+    # 2. 조건부 항목 설정: 제한 현장이 아닐 때만 온수, 난방, 냉방 추가
     if not is_limited:
-        # 일반 현장: 입력창 표시
-        st.markdown(f"🔥 **온수** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_h} $m^3$)", unsafe_allow_html=True)
-        in_h = st.text_input("온수", key="h_v", label_visibility="collapsed", placeholder="")
+        show_items.extend(['온수', '난방', '냉방'])
+
+    # --- 항목별 [입력창 + 전송 버튼] 배치 ---
+    for item in show_items:
+        icon = {"전기": "⚡", "수도": "💧", "온수": "🔥", "난방": "♨️", "냉방": "❄️"}[item]
+        unit = {"전기": "kw", "수도": "m³", "온수": "m³", "난방": "MWh", "냉방": "MWh"}[item]
         
-        st.markdown(f"♨️ **난방** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_n:.3f} MWh)", unsafe_allow_html=True)
-        in_n = st.text_input("난방", key="n_v", label_visibility="collapsed", placeholder="")
+        # 전월 수치 포맷팅
+        p_val = locals()[f'prev_{item[0].lower()}']
+        p_str = f"{p_val:.3f}" if item in ['난방', '냉방'] else f"{p_val}"
+
+        st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        st.markdown(f"❄️ **냉방** (<span style='font-size: 0.7em; color: #95a5a6;'>전월</span>_ {prev_c:.3f} MWh)", unsafe_allow_html=True)
-        in_c = st.text_input("냉방", key="c_v", label_visibility="collapsed", placeholder="")
-    else:
-        # S타워 등 제한 현장: 입력창은 숨기고 위에서 정의한 prev 값을 계승
-        in_h = str(prev_h)
-        in_n = str(prev_n)
-        in_c = str(prev_c)
+        col_in, col_btn = st.columns([3, 1])
+        with col_in:
+            if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
+            elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
+            elif item == '온수': in_h = st.text_input(item, key="h_v", label_visibility="collapsed")
+            elif item == '난방': in_n = st.text_input(item, key="n_v", label_visibility="collapsed")
+            elif item == '냉방': in_c = st.text_input(item, key="c_v", label_visibility="collapsed")
+        with col_btn:
+            if st.button("전송", key=f"btn_send_{item}"):
+                submit = True
+
+    # 3. [계승 로직] S타워 등에서 숨겨진 값들을 전월값으로 자동 설정
+    if is_limited:
+        in_h, in_n, in_c = str(prev_h), str(prev_n), str(prev_c)
 
     st.divider()
-    # 폼 버튼이 조건문 밖에 있는지 확인
-    submit = st.form_submit_button("🚀 전송. 호수이동", use_container_width=True)
+    if st.button("🚀 전송. 호수이동", use_container_width=True, key="main_move_btn"):
+        submit = True
 
 # --- 8. 데이터 전송 로직 ---
 if submit:
