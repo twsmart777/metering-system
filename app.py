@@ -245,99 +245,103 @@ st.divider()
 # --- 6. 호수 입력 및 데이터 조회 ---
 st.markdown("""
     <style>
-    /* 1. 전체 위젯에 대해 시스템 다크모드 강제 무시 */
+    /* [추가] 상단 간격 축소 및 버튼 레이아웃용 */
+    .block-container { padding-top: 1rem !important; }
+    
+    /* [기존 유지] 1. 전체 위젯에 대해 시스템 다크모드 강제 무시 */
     [data-testid="stTextInput"] {
         color-scheme: light !important;
     }
 
-    /* 2. 입력창 전체 컨테이너 높이 */
+    /* [기존 유지] 2. 입력창 전체 컨테이너 높이 */
     [data-testid="stTextInput"] > div {
         height: 75px !important;
     }
 
-    /* 3. 입력창 내부 배경색과 글자색 강제 고정 */
+    /* [기존 유지] 3. 입력창 내부 배경색과 글자색 강제 고정 */
     [data-testid="stTextInput"] > div > div {
         height: 75px !important;
-        background-color: #f0f2f6 !important; /* 무조건 흰색 배경 */
-          color: #000000 !important; /* 글자색 검정 */
+        background-color: #f0f2f6 !important; 
+        color: #000000 !important; 
     }
 
-    /* 4. 실제 input 태그 내부 설정 (다크모드에서도 검정글자 유지) */
+    /* [기존 유지] 4. 실제 input 태그 내부 설정 */
     [data-testid="stTextInput"] input {
         height: 75px !important;
         font-size: 22px !important;
         font-weight: bold !important;
-        color: #000000 !important; /* 글자색 검정 */
-        -webkit-text-fill-color: #000000 !important; /* iOS/사파리 강제 검정색 */
+        color: #000000 !important; 
+        -webkit-text-fill-color: #000000 !important; 
         background-color: transparent !important;
         padding: 0 15px !important;
     }
 
-    /* 5. 플레이스홀더(안내문구) 색상도 흐린 회색으로 고정 */
+    /* [기존 유지] 5. 플레이스홀더 색상 고정 */
     [data-testid="stTextInput"] input::placeholder {
         color: #888888 !important;
         -webkit-text-fill-color: #888888 !important;
     }
 
-    /* 6. "⚡ 전기", "💧 수도" 같은 마크다운 텍스트 크기 */
+    /* [기존 유지] 6. 마크다운 텍스트 크기 */
     [data-testid="stMarkdownContainer"] p {
-        font-size: 24px !important; /* 이 숫자를 조절해서 라벨 크기를 변경하세요 */
+        font-size: 24px !important; 
         font-weight: bold !important;
-        margin-bottom: 5px !important; /* 입력창과의 간격을 좁힘 */
+        margin-bottom: 5px !important; 
     }
-    /* 전송 버튼(submit button)의 높이와 글자 크기 조절 */
-    div[data-testid="stFormSubmitButton"] button {
-        height: 90px !important;
+
+    /* [통합] 모든 버튼 스타일 (조회, 개별 전송, 하단 버튼 모두 동일 디자인) */
+    div.stButton > button, div[data-testid="stFormSubmitButton"] button {
+        height: 75px !important; /* 입력창 높이와 맞춤 */
         font-size: 24px !important;
         font-weight: bold !important;
-        
-        /* [중앙 정렬 보정] */
         display: flex !important;
-        align-items: center !important;     /* 수직 중앙 정렬 */
-        justify-content: center !important;  /* 수평 중앙 정렬 */
-        line-height: 1 !important;           /* 기본 줄높이 초기화 */
-        padding-top: 5px !important;         /* 만약 아래로 쏠려 보이면 0으로, 위로 쏠리면 숫자를 늘리세요 */
-        
-        /* [색상 설정] 시스템 다크모드 영향을 받지 않는 선명한 색 */
-        background-color: #FFD700 !important; /* 밝은 골드/노란색 */
-        color: #000000 !important;           /* 글자는 진한 검정 */
+        align-items: center !important;
+        justify-content: center !important;
+        background-color: #FFD700 !important; /* 노란색 */
+        color: #000000 !important;
         border-radius: 12px !important;
-        color-scheme: light !important;
+        border: none !important;
     }
-    
-    /* 버튼을 눌렀을 때(Hover/Active) 살짝 어두워지는 효과 */
-    div[data-testid="stFormSubmitButton"] button:hover {
+
+    /* 버튼 마우스 오버 효과 */
+    div.stButton > button:hover, div[data-testid="stFormSubmitButton"] button:hover {
         background-color: #FFC400 !important;
-        border-color: #000000 !important;
+    }
+
+    /* 전월 데이터 로딩 바 */
+    .loading-bar {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 18px;
     }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
+# 호수 입력 및 데이터 조회 (최종 통합본) ---
 room_col, btn_col = st.columns([3, 1])
 
-# --- 직전 한 줄 (기존 코드) ---
-room_col, btn_col = st.columns([3, 1])
-
-# =========================================================
-# 📝 [6번 교체] 전송 후 다음 호수(next_room)를 입력창에 자동 반영
+# [기존 기능 유지] 다음 호수 자동 반영 로직
 if 'next_room' in st.session_state:
-    # 8번 로직에서 예약된 다음 호수가 있다면 세션 입력값으로 강제 설정
     st.session_state['room_input'] = st.session_state.next_room
-    # 사용 후 삭제하여 다음 입력 대기
     del st.session_state['next_room']
 
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
 with room_col:
-    # value=st.session_state['room_input']을 통해 다음 호수가 화면에 표시됨
+    # 3비율: 호수 입력창
     room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
-# =========================================================
 
 with btn_col:
-    load_btn = st.button("조회 🔍", use_container_width=True)
+    # 1비율: 조회 버튼 (우측 배치)
+    load_btn = st.button("조회", use_container_width=True)
 
+# 데이터 로딩 및 검정 박스 표시 로직
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
     st.session_state['room_input'] = room
@@ -345,29 +349,44 @@ if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_data'] = last_data
     
     if last_data is not None:
-        st.success(f"📊 {room}호 전월 데이터 로딩완료")
+        # 1) 심플 로딩 바 표시
+        st.markdown(f"<div class='loading-bar'>✅ {room}호 전월 데이터 로딩완료</div>", unsafe_allow_html=True)
+        
+        # 2) 검정 박스 스타일 정의 (유지)
         st.markdown("""
             <style>
-            .reading-container { display: flex; justify-content: space-between; align-items: center; background-color: #262730; padding: 10px; border-radius: 5px; gap: 5px; }
-            .reading-box { flex: 1; text-align: center; min-width: 0; }
-            .reading-label { color: #95a5a6; font-size: clamp(10px, 3vw, 14px); margin-bottom: 2px; }
-            .reading-value { color: white; font-weight: bold; font-size: clamp(12px, 4vw, 18px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .reading-container { display: flex; justify-content: space-around; align-items: center; background-color: #262730; padding: 15px; border-radius: 5px; gap: 10px; margin-bottom: 15px; }
+            .reading-box { text-align: center; min-width: 60px; }
+            .reading-label { color: #95a5a6; font-size: 14px; margin-bottom: 2px; }
+            .reading-value { color: white; font-weight: bold; font-size: 20px; }
             </style>
         """, unsafe_allow_html=True)
 
-        h_disp = safe_float(last_data.get('난방', 0.0))
-        c_disp = safe_float(last_data.get('냉방', 0.0))
+        # 3) 항목 필터링 (데이터가 있는 것만 검정 박스에 추가)
+        boxes_html = ""
+        for item in ['전기', '수도', '온수', '난방', '냉방']:
+            val = last_data.get(item, 0)
+            # 수치가 0보다 크거나 '전기'인 경우에만 표시 (전기는 항상 표시)
+            if item == '전기' or (val and float(str(val).replace(',', '')) > 0):
+                # 난방/냉방은 소수점 3자리, 나머지는 정수/문자열 그대로
+                if item in ['난방', '냉방']:
+                    try:
+                        d_val = f"{float(str(val).replace(',', '')):.3f}"
+                    except:
+                        d_val = val
+                else:
+                    d_val = val
+                
+                boxes_html += f"""
+                    <div class="reading-box">
+                        <div class="reading-label">{item}</div>
+                        <div class="reading-value">{d_val}</div>
+                    </div>
+                """
 
-        st.markdown(f"""
-            <div class="reading-container">
-                <div class="reading-box"><div class="reading-label">전기</div><div class="reading-value">{last_data.get('전기', '-')}</div></div>
-                <div class="reading-box"><div class="reading-label">수도</div><div class="reading-value">{last_data.get('수도', '-')}</div></div>
-                <div class="reading-box"><div class="reading-label">온수</div><div class="reading-value">{last_data.get('온수', '-')}</div></div>
-                <div class="reading-box"><div class="reading-label">난방</div><div class="reading-value">{h_disp:.3f}</div></div>
-                <div class="reading-box"><div class="reading-label">냉방</div><div class="reading-value">{c_disp:.3f}</div></div>
-            </div>
-        """, unsafe_allow_html=True)
-
+        # 4) 완성된 검정 박스 출력
+        st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
+        
 # --- 7. 검침 수치 입력 폼 ---
 with st.form("inspection_form", clear_on_submit=True):
     current_site = str(selected_building).strip()
