@@ -315,7 +315,7 @@ with btn_col:
     # 1비율: 조회 버튼 (우측 배치)
     load_btn = st.button("조회", use_container_width=True)
 
-# 데이터 로딩 및 검정 박스 표시 로직
+# 데이터 로딩 및 검정 박스 표시 로직 (태그 노출 수정본)
 if load_btn or (room and st.session_state.get('last_room') != room):
     st.session_state['last_room'] = room
     st.session_state['room_input'] = room
@@ -326,7 +326,7 @@ if load_btn or (room and st.session_state.get('last_room') != room):
         # 1) 심플 로딩 바 표시
         st.markdown(f"<div class='loading-bar'>✅ {room}호 전월 데이터 로딩완료</div>", unsafe_allow_html=True)
         
-        # 2) 검정 박스 스타일 정의 (유지)
+        # 2) 검정 박스 스타일 정의
         st.markdown("""
             <style>
             .reading-container { display: flex; justify-content: space-around; align-items: center; background-color: #262730; padding: 15px; border-radius: 5px; gap: 10px; margin-bottom: 15px; }
@@ -336,13 +336,11 @@ if load_btn or (room and st.session_state.get('last_room') != room):
             </style>
         """, unsafe_allow_html=True)
 
-        # 3) 항목 필터링 (데이터가 있는 것만 검정 박스에 추가)
+        # 3) 항목 필터링 (따옴표 및 f-string 교정)
         boxes_html = ""
         for item in ['전기', '수도', '온수', '난방', '냉방']:
             val = last_data.get(item, 0)
-            # 수치가 0보다 크거나 '전기'인 경우에만 표시 (전기는 항상 표시)
             if item == '전기' or (val and float(str(val).replace(',', '')) > 0):
-                # 난방/냉방은 소수점 3자리, 나머지는 정수/문자열 그대로
                 if item in ['난방', '냉방']:
                     try:
                         d_val = f"{float(str(val).replace(',', '')):.3f}"
@@ -351,14 +349,13 @@ if load_btn or (room and st.session_state.get('last_room') != room):
                 else:
                     d_val = val
                 
-                boxes_html += f"""
-                    <div class="reading-box">
-                        <div class="reading-label">{item}</div>
-                        <div class="reading-value">{d_val}</div>
-                    </div>
-                """
+                # [수정 포인트] f-string 내부의 따옴표를 명확히 분리하여 태그 노출 방지
+                boxes_html += f'<div class="reading-box">'
+                boxes_html += f'<div class="reading-label">{item}</div>'
+                boxes_html += f'<div class="reading-value">{d_val}</div>'
+                boxes_html += f'</div>'
 
-        # 4) 완성된 검정 박스 출력
+        # 4) 완성된 검정 박스 출력 (정상 출력 확인)
         st.markdown(f'<div class="reading-container">{boxes_html}</div>', unsafe_allow_html=True)
 submit = False         
 # --- 7. 당월 수치 입력 섹션 (KeyError 수정 최종본) ---
