@@ -295,29 +295,25 @@ st.markdown("""
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 8px !important; /* 입력창과 버튼 사이 간격 */
+        gap: 10px !important;
     }
 
-    /* 2. 컬럼이 아래로 밀리는 성질 제거 */
+    /* 2. 각 칸의 너비를 50:50으로 강제 배분 (밀림/잘림 방지) */
     [data-testid="column"] {
-        width: auto !important;
+        flex: 1 1 50% !important; /* 무조건 50% 지분 확보 */
         min-width: 0px !important;
-        flex: 1 1 auto !important;
+        max-width: 50% !important;
     }
 
-    /* 3. 첫 번째 칸(입력창)과 두 번째 칸(버튼)의 너비 비율 강제 고정 */
-    [data-testid="column"]:nth-of-type(1) {
-        flex: 3 !important; /* 입력창이 3만큼 차지 */
-    }
-    [data-testid="column"]:nth-of-type(2) {
-        flex: 1.2 !important; /* 버튼이 1.2만큼 차지 */
-    }
-
-    /* 4. 입력창 너비가 버튼을 밀어내지 않게 설정 */
-    .stTextInput {
+    /* 3. 입력창이 뚱뚱해지지 않도록 내부 설정 */
+    [data-testid="stTextInput"] {
         width: 100% !important;
     }
-    /* --- 여기까지 교체 끝 --- */
+
+    /* 4. 입력창 내부 텍스트가 너무 커서 밀린다면 폰트 살짝 조정 (선택사항) */
+    [data-testid="stTextInput"] input {
+        font-size: 26px !important; /* 22px에서 20px로 아주 살짝 줄여 안정성 확보 */
+    }
 
     /* [통합] 모든 버튼 스타일 (조회, 개별 전송, 하단 버튼 모두 동일 디자인) */
     div.stButton > button, div[data-testid="stFormSubmitButton"] button {
@@ -353,7 +349,7 @@ st.markdown("""
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 # 호수 입력 및 데이터 조회 (최종 통합본) ---
-room_col, btn_col = st.columns([1.5, 1.2])
+room_col, btn_col = st.columns([1, 1])
 
 # [기존 기능 유지] 다음 호수 자동 반영 로직
 if 'next_room' in st.session_state:
@@ -456,7 +452,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        col_in, col_btn = st.columns([1.5, 1.2])
+        col_in, col_btn = st.columns([1, 1])
         with col_in:
             if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
             elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
