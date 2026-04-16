@@ -256,9 +256,9 @@ st.markdown("""
     /* [수정] 실제 입력되는 숫자 설정 */
     [data-testid="stTextInput"] input {
         height: 80px !important;
-        font-size: 32px !important;
+        font-size: 40px !important;
         font-weight: bold !important;
-        letter-spacing: 5px !important;
+        letter-spacing: 15px !important;
         color: #000000 !important; /* 입력 숫자는 검정색 */
         -webkit-text-fill-color: #000000 !important;
         padding: 0 15px !important;
@@ -295,7 +295,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown(f"### 🔢 {selected_building} 호수 입력")
+st.markdown(f"### 🔢 {selected_building} 호수입력")
 
 # 1. 호수 입력창 (세로 배치)
 if 'next_room' in st.session_state:
@@ -304,7 +304,7 @@ if 'next_room' in st.session_state:
 if 'room_input' not in st.session_state:
     st.session_state['room_input'] = ""
 
-room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수 입력", label_visibility="collapsed")
+room = st.text_input("호수", value=st.session_state['room_input'], placeholder="호수입력", label_visibility="collapsed")
 
 # 2. 조회 버튼 (입력창 아래로 배치)
 load_btn = st.button("🔍 전월 데이터 조회", use_container_width=True)
