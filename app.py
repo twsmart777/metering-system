@@ -288,6 +288,17 @@ st.markdown("""
         font-weight: bold !important;
         margin-bottom: 5px !important; 
     }
+  
+    /* [추가] 입력창이 버튼을 옆으로 밀어내지 않도록 너비 제한 */
+    [data-testid="stTextInput"] {
+        width: 100% !important;
+        min-width: 50px !important; /* 최소 너비를 줄여서 버튼이 들어올 자리를 만듦 */
+    }
+
+    /* 칸(Column) 사이의 불필요한 간격을 줄여 한 줄에 들어가게 함 */
+    [data-testid="column"] {
+        padding: 0 5px !important;
+    }
 
     /* [통합] 모든 버튼 스타일 (조회, 개별 전송, 하단 버튼 모두 동일 디자인) */
     div.stButton > button, div[data-testid="stFormSubmitButton"] button {
@@ -323,7 +334,7 @@ st.markdown("""
 
 st.markdown(f"### 🔢 {selected_building} 호수 입력")
 # 호수 입력 및 데이터 조회 (최종 통합본) ---
-room_col, btn_col = st.columns([3, 1])
+room_col, btn_col = st.columns([2, 1])
 
 # [기존 기능 유지] 다음 호수 자동 반영 로직
 if 'next_room' in st.session_state:
@@ -426,7 +437,7 @@ if room:
 
         st.markdown(f"{icon} **{item}** <span style='font-size: 16px; color: #666;'>(전월_ {p_str} {unit})</span>", unsafe_allow_html=True)
         
-        col_in, col_btn = st.columns([3, 1])
+        col_in, col_btn = st.columns([2, 1])
         with col_in:
             if item == '전기': in_e = st.text_input(item, key="e_v", label_visibility="collapsed")
             elif item == '수도': in_w = st.text_input(item, key="w_v", label_visibility="collapsed")
